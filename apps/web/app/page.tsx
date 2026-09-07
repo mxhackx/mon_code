@@ -1,69 +1,57 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useState } from "react";
+
+type Scene = "welcome" | "splash" | "ready";
 
 export default function Home() {
+  const [scene, setScene] = useState<Scene>("welcome");
+
+  useEffect(() => {
+    const splashTimer = window.setTimeout(() => setScene("splash"), 1400);
+    const readyTimer = window.setTimeout(() => setScene("ready"), 2150);
+    return () => {
+      window.clearTimeout(splashTimer);
+      window.clearTimeout(readyTimer);
+    };
+  }, []);
+
+  const isWelcome = scene === "welcome";
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <main className={`landing-page scene-${scene}`}>
+      <div className="splash" aria-hidden="true" />
+      {!isWelcome && <><div className="ambient ambient-one" /><div className="ambient ambient-two" /></>}
+
+      {!isWelcome && (
+        <header className="site-header">
+          <a className="brand brand-small" href="#accueil" aria-label="VisitCard - accueil"><span>Visit</span>Card</a>
+          <p className="header-note">Vos contacts, en un scan.</p>
+        </header>
+      )}
+
+      <section className="hero" id="accueil">
+        <div className="welcome-message" aria-live="polite"><h1>Welcome to <span>Visit</span>Card</h1></div>
+        {!isWelcome && (
+          <div className="action-panel">
+            <p className="eyebrow">Votre carte, partout avec vous</p>
+            <h1 className="brand brand-hero"><span>Visit</span>Card</h1>
+            <p className="hero-description">Partagez votre identité professionnelle simplement, rapidement et sans papier.</p>
+            <div className="action-buttons">
+              <button className="cta-button" type="button">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 16v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3" /></svg>
+                Chargez votre carte
+              </button>
+              <button className="cta-button" type="button">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M7 10h5m-5 4v4" /></svg>
+                Créer une carte
+              </button>
+            </div>
+          </div>
+        )}
+      </section>
+
+      {!isWelcome && <footer className="site-footer"><span className="footer-dot" /> Simple à créer. Facile à partager.</footer>}
+    </main>
   );
 }
