@@ -48,3 +48,15 @@ button, a { font: inherit; }
 @keyframes ripple { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.15); } 18% { opacity: .65; } 100% { opacity: 0; transform: translate(-50%, -50%) scale(1); } }
 @media (max-width: 580px) { .landing-page { padding: 24px 20px; } .header-note { display: none; } .site-footer { font-size: 11px; } .action-buttons { flex-direction: column; margin: auto; width: min(100%, 310px); } .cta-button { width: 100%; } }
 @media (prefers-reduced-motion: reduce) { .splash, .ambient, .site-header, .site-footer, .welcome-message, .action-panel { transition: none; } .welcome-message::before, .welcome-message::after { animation: none; opacity: .25; transform: translate(-50%, -50%) scale(.7); } }
+
+.image-upload { width: min(100%, 520px); }
+.image-upload-input { height: 1px; opacity: 0; overflow: hidden; position: absolute; width: 1px; }
+.image-upload-dropzone { align-items: center; border: 1.5px dashed #d28a5e; border-radius: 18px; color: #66534a; cursor: pointer; display: flex; flex-direction: column; gap: 8px; justify-content: center; min-height: 250px; padding: 30px; text-align: center; transition: background .2s ease, border-color .2s ease; }
+.image-upload-dropzone:hover { background: #ffead5; border-color: var(--orange); }
+.image-upload-dropzone strong { color: var(--ink); font-size: 16px; }
+.image-upload-dropzone small { color: #927868; font-size: 12px; }
+.image-upload-icon { align-items: center; background: var(--orange); border-radius: 50%; color: white; display: flex; font-size: 24px; font-weight: 700; height: 42px; justify-content: center; width: 42px; }
+.image-upload-preview { position: relative; }
+.image-upload-preview img { border-radius: 18px; display: block; height: 250px; object-fit: cover; width: 100%; }
+.image-upload-remove { background: var(--ink); border: 0; border-radius: 999px; bottom: 14px; color: white; cursor: pointer; font-size: 13px; font-weight: 700; padding: 10px 14px; position: absolute; right: 14px; }
+.image-upload-error { color: #b42318; font-size: 13px; margin: 8px 0 0; }
