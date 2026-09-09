@@ -1,14 +1,12 @@
 import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
-import { AppModule, ObserveInstrument } from './app.module';
+import { AppModule } from './app.module';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import * as express from 'express';
 import * as path from 'path';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    instrument: ObserveInstrument,
-  });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   // Activer CORS pour permettre les requêtes depuis apps/web
   app.enableCors({
