@@ -7,6 +7,13 @@ import sharp from 'sharp';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import 'multer';
 
+export interface CardMetadata {
+  userName?: string;
+  clientName?: string;
+  workDone?: string;
+  amountReceived?: string;
+}
+
 @Injectable()
 export class CardsService {
   private readonly logger = new Logger(CardsService.name);
@@ -27,7 +34,7 @@ export class CardsService {
     }
   }
 
-  async createCard(file: Express.Multer.File) {
+  async createCard(file: Express.Multer.File, metadata?: CardMetadata) {
     if (!file) {
       throw new BadRequestException('Aucun fichier fourni');
     }
@@ -106,17 +113,28 @@ export class CardsService {
     });
 
     // 5. Enregistrement dans PostgreSQL via Prisma
-    const card = await this.prisma.card.create({
-      data: {
-        slug,
-        imageUrl,
-      },
-    });
+    const createData: Record<string, unknown> = {
+      slug,
+      imageUrl,
+    };
+    if (metadata?.userName) createData.userName = metadata.userName;
+    if (metadata?.clientName) createData.clientName = metadata.clientName;
+    if (metadata?.workDone) createData.workDone = metadata.workDone;
+    if (metadata?.amountReceived) createData.amountReceived = metadata.amountReceived;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const card = (await this.prisma.card.create({
+      data: createData as any,
+    })) as any;
 
     return {
       id: card.id.toString(),
       slug: card.slug,
       imageUrl: card.imageUrl,
+      userName: card.userName ?? null,
+      clientName: card.clientName ?? null,
+      workDone: card.workDone ?? null,
+      amountReceived: card.amountReceived ?? null,
       cardUrl,
       qrCode,
       createdAt: card.createdAt,
@@ -124,9 +142,10 @@ export class CardsService {
   }
 
   async getCardBySlug(slug: string) {
-    const card = await this.prisma.card.findUnique({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const card = (await this.prisma.card.findUnique({
       where: { slug },
-    });
+    })) as any;
 
     if (!card) {
       throw new NotFoundException(`Carte introuvable pour le slug "${slug}"`);
@@ -138,8 +157,33 @@ export class CardsService {
       id: card.id.toString(),
       slug: card.slug,
       imageUrl: card.imageUrl,
+      userName: card.userName ?? null,
+      clientName: card.clientName ?? null,
+      workDone: card.workDone ?? null,
+      amountReceived: card.amountReceived ?? null,
       cardUrl: `${appUrl}/c/${card.slug}`,
       createdAt: card.createdAt,
     };
+  }
+
+  async getAllCards() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const cards = (await this.prisma.card.findMany({
+      orderBy: { createdAt: 'desc' },
+    })) as any[];
+
+    const appUrl = process.env.APP_URL ?? 'http://localhost:3000';
+
+    return cards.map((card) => ({
+      id: card.id.toString(),
+      slug: card.slug,
+      imageUrl: card.imageUrl,
+      userName: card.userName ?? null,
+      clientName: card.clientName ?? null,
+      workDone: card.workDone ?? null,
+      amountReceived: card.amountReceived ?? null,
+      cardUrl: `${appUrl}/c/${card.slug}`,
+      createdAt: card.createdAt,
+    }));
   }
 }

@@ -57,8 +57,8 @@ export default function CardViewPage() {
       <div className="ambient ambient-two" />
 
       <header className="site-header">
-        <Link className="brand brand-small" href="/" aria-label="VisitCard - accueil">
-          <span>Visit</span>Card
+        <Link className="brand brand-small" href="/" aria-label="GenQR - accueil">
+          <span>Gen</span>QR
         </Link>
         <p className="header-note">Vos contacts, en un scan.</p>
       </header>
@@ -109,6 +109,7 @@ export default function CardViewPage() {
               <p className="eyebrow">Carte de visite partagée</p>
               <h1 className="brand" style={{ fontSize: "clamp(28px, 4vw, 42px)", margin: "0 0 20px" }}>
                 <span>Visit</span>Card
+                <span>Gen</span>QR
               </h1>
 
               <div

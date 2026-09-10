@@ -9,10 +9,14 @@ datasource db {
 }
 
 model Card {
-  id        BigInt   @id @default(autoincrement())
-  slug      String   @unique
-  imageUrl  String   @map("image_url")
-  createdAt DateTime @default(now()) @map("created_at")
+  id             BigInt   @id @default(autoincrement())
+  slug           String   @unique
+  imageUrl       String   @map("image_url")
+  userName       String?  @map("user_name")
+  clientName     String?  @map("client_name")
+  workDone       String?  @map("work_done")
+  amountReceived String?  @map("amount_received")
+  createdAt      DateTime @default(now()) @map("created_at")
 
   @@map("cards")
 }

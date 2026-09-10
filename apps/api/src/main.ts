@@ -21,6 +21,6 @@ async function bootstrap() {
 
   const port = process.env.PORT ?? 5500;
   await app.listen(port);
-  console.log(`VisitCard API is running on: http://localhost:${port}`);
+  console.log(`GenQR API is running on: http://localhost:${port}`);
 }
 bootstrap();

@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Param,
+  Body,
   UseInterceptors,
   UploadedFile,
   BadRequestException,
@@ -31,11 +32,23 @@ export class CardsController {
       }),
     )
     file: Express.Multer.File,
+    @Body()
+    body?: {
+      userName?: string;
+      clientName?: string;
+      workDone?: string;
+      amountReceived?: string;
+    },
   ) {
     if (!file) {
       throw new BadRequestException('Veuillez fournir une image.');
     }
-    return this.cardsService.createCard(file);
+    return this.cardsService.createCard(file, body);
+  }
+
+  @Get()
+  async getAllCards() {
+    return this.cardsService.getAllCards();
   }
 
   @Get(':slug')

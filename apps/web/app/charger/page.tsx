@@ -12,7 +12,7 @@ interface QrResult {
 }
 
 export default function ChargerPage() {
-  const { file, previewUrl, setFile, clearFile, setHasSeenIntro } = useFile();
+  const { file, previewUrl, setFile, clearFile, setHasSeenIntro, userInfo } = useFile();
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [qrResult, setQrResult] = useState<QrResult | null>(null);
@@ -47,6 +47,10 @@ export default function ChargerPage() {
     try {
       const formData = new FormData();
       formData.append("file", file);
+      if (userInfo.userName) formData.append("userName", userInfo.userName);
+      if (userInfo.clientName) formData.append("clientName", userInfo.clientName);
+      if (userInfo.workDone) formData.append("workDone", userInfo.workDone);
+      if (userInfo.amountReceived) formData.append("amountReceived", userInfo.amountReceived);
 
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5500";
       const response = await fetch(`${apiUrl}/cards`, {
@@ -86,8 +90,8 @@ export default function ChargerPage() {
       <div className="ambient ambient-two" />
 
       <header className="site-header">
-        <Link className="brand brand-small" href="/" onClick={handleBack} aria-label="VisitCard - accueil">
-          <span>Visit</span>Card
+        <Link className="brand brand-small" href="/" onClick={handleBack} aria-label="GenQR - accueil">
+          <span>Gen</span>QR
         </Link>
         <p className="header-note">Vos contacts, en un scan.</p>
       </header>
@@ -140,7 +144,7 @@ export default function ChargerPage() {
               <div className="action-buttons">
                 <a
                   href={qrResult.qrCode}
-                  download={`visitcard-${qrResult.slug}.png`}
+                  download={`genqr-${qrResult.slug}.png`}
                   className="cta-button"
                 >
                   <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -179,6 +183,43 @@ export default function ChargerPage() {
               <h1 className="brand" style={{ fontSize: "clamp(32px, 5vw, 48px)", margin: "0 0 16px" }}>
                 Carte <span>sélectionnée</span>
               </h1>
+
+              {(userInfo.clientName || userInfo.userName || userInfo.workDone || userInfo.amountReceived) && (
+                <div className="user-recap-box">
+                  <div className="recap-header">
+                    <span className="recap-title">Détails de l&apos;intervention</span>
+                    <Link href="/" className="recap-edit-btn">
+                      Modifier
+                    </Link>
+                  </div>
+                  <div className="recap-grid">
+                    {userInfo.userName && (
+                      <div className="recap-item">
+                        <span className="recap-label">Nom et prénoms :</span>
+                        <strong className="recap-value">{userInfo.userName}</strong>
+                      </div>
+                    )}
+                    {userInfo.clientName && (
+                      <div className="recap-item">
+                        <span className="recap-label">Client :</span>
+                        <strong className="recap-value">{userInfo.clientName}</strong>
+                      </div>
+                    )}
+                    {userInfo.amountReceived && (
+                      <div className="recap-item">
+                        <span className="recap-label">Montant reçu :</span>
+                        <span className="amount-badge">{userInfo.amountReceived}</span>
+                      </div>
+                    )}
+                    {userInfo.workDone && (
+                      <div className="recap-item" style={{ gridColumn: "1 / -1" }}>
+                        <span className="recap-label">Travaux effectués :</span>
+                        <p className="recap-text">{userInfo.workDone}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <div className="image-upload" style={{ margin: "0 auto 24px" }}>
                 {previewUrl ? (

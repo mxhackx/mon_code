@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "VisitCard — Votre carte de visite numérique",
-  description: "Créez et partagez votre carte de visite numérique.",
+  title: "GenQR — Votre carte de visite numérique",
+  description: "Créez et partagez votre carte de visite numérique avec GenQR.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
