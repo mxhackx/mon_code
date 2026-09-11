@@ -90,10 +90,11 @@ export default function ChargerPage() {
       <div className="ambient ambient-two" />
 
       <header className="site-header">
-        <Link className="brand brand-small" href="/" onClick={handleBack} aria-label="GenQR - accueil">
+        <Link className="brand brand-small" href="/choix-profil" onClick={handleBack} aria-label="GenQR - accueil">
           <span>Gen</span>QR
         </Link>
         <p className="header-note">Vos contacts, en un scan.</p>
+        <p className="header-note">Vos menus digitaux, en un scan.</p>
       </header>
 
       <section className="hero">

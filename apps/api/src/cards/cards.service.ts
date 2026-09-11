@@ -5,6 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import sharp from 'sharp';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { Card, Prisma } from '@prisma/client';
 import 'multer';
 
 export interface CardMetadata {
@@ -12,6 +13,17 @@ export interface CardMetadata {
   clientName?: string;
   workDone?: string;
   amountReceived?: string;
+  restaurantName?: string;
+  locationUrl?: string;
+  phoneNumber?: string;
+  themeId?: string;
+  qrStyle?: string;
+}
+
+export interface UploadedCardFiles {
+  file?: Express.Multer.File;
+  logo?: Express.Multer.File;
+  menu?: Express.Multer.File[];
 }
 
 @Injectable()
@@ -34,8 +46,86 @@ export class CardsService {
     }
   }
 
-  async createCard(file: Express.Multer.File, metadata?: CardMetadata) {
-    if (!file) {
+  /**
+   * Traite une image avec Sharp (optimisation WebP) et la stocke sur Supabase Storage ou en local
+   */
+  private async processAndUploadImage(buffer: Buffer, fileName: string): Promise<string> {
+    const webpBuffer = await sharp(buffer)
+      .rotate()
+      .resize({ width: 1600, withoutEnlargement: true })
+      .webp({ quality: 82 })
+      .toBuffer();
+
+    if (this.supabase) {
+      const { error: uploadError } = await this.supabase.storage
+        .from(this.bucketName)
+        .upload(fileName, webpBuffer, {
+          contentType: 'image/webp',
+          upsert: true,
+        });
+
+      if (uploadError) {
+        this.logger.error(`Erreur upload Supabase: ${uploadError.message}`);
+        throw new BadRequestException(`Échec du stockage sur Supabase: ${uploadError.message}`);
+      }
+
+      const { data } = this.supabase.storage.from(this.bucketName).getPublicUrl(fileName);
+      return data.publicUrl;
+    } else {
+      const uploadsDir = path.join(process.cwd(), 'uploads');
+      await fs.promises.mkdir(uploadsDir, { recursive: true });
+      const filePath = path.join(uploadsDir, fileName);
+      await fs.promises.writeFile(filePath, webpBuffer);
+
+      const apiUrl = process.env.API_URL ?? 'http://localhost:5500';
+      return `${apiUrl}/uploads/${fileName}`;
+    }
+  }
+
+  /**
+   * Génère un QR Code avec le style graphique sélectionné
+   */
+  private async generateStyledQrCode(cardUrl: string, qrStyle: string = 'style-1'): Promise<string> {
+    let darkColor = '#181411';
+    let lightColor = '#ffffff';
+
+    switch (qrStyle) {
+      case 'style-2': // Signature Orange GenQR
+        darkColor = '#ef6a22';
+        lightColor = '#ffffff';
+        break;
+      case 'style-3': // Sombre & Or
+        darkColor = '#d4af37';
+        lightColor = '#0f0d0c';
+        break;
+      case 'style-4': // Moderne Ardoise
+        darkColor = '#2d3748';
+        lightColor = '#f8fafc';
+        break;
+      case 'style-5': // Émeraude & Nature
+        darkColor = '#065f46';
+        lightColor = '#f0fdf4';
+        break;
+      case 'style-1': // Classique Pur
+      default:
+        darkColor = '#181411';
+        lightColor = '#ffffff';
+        break;
+    }
+
+    return QRCode.toDataURL(cardUrl, {
+      width: 500,
+      margin: 2,
+      color: {
+        dark: darkColor,
+        light: lightColor,
+      },
+    });
+  }
+
+  async createCard(files: UploadedCardFiles, metadata?: CardMetadata) {
+    const hasAnyFile = files.file || files.logo || (files.menu && files.menu.length > 0);
+    if (!hasAnyFile) {
       throw new BadRequestException('Aucun fichier fourni');
     }
 
@@ -57,80 +147,63 @@ export class CardsService {
       }
     }
 
-    // 2. Conversion et optimisation de l'image en WebP avec Sharp
-    // - .rotate() : applique l'orientation EXIF (crucial pour les photos mobiles)
-    // - .resize() : limite la largeur à 1600px max pour éviter les fichiers géants
-    // - .webp() : compression optimisée de haute qualité
-    const webpBuffer = await sharp(file.buffer)
-      .rotate()
-      .resize({ width: 1600, withoutEnlargement: true })
-      .webp({ quality: 82 })
-      .toBuffer();
+    // 2. Traitement et upload des images (Logo et/ou Menu)
+    let logoUrl: string | null = null;
+    const menuImagesUrls: string[] = [];
 
-    const fileName = `${slug}.webp`;
-    let imageUrl = '';
-
-    // 3. Stockage sur Supabase Storage (si configuré) ou repli local
-    if (this.supabase) {
-      const { error: uploadError } = await this.supabase.storage
-        .from(this.bucketName)
-        .upload(fileName, webpBuffer, {
-          contentType: 'image/webp',
-          upsert: true,
-        });
-
-      if (uploadError) {
-        this.logger.error(`Erreur upload Supabase: ${uploadError.message}`);
-        throw new BadRequestException(`Échec du stockage sur Supabase: ${uploadError.message}`);
-      }
-
-      const { data } = this.supabase.storage.from(this.bucketName).getPublicUrl(fileName);
-      imageUrl = data.publicUrl;
-      this.logger.log(`Image uploadée sur Supabase Storage : ${imageUrl}`);
-    } else {
-      // Repli local en WebP
-      const uploadsDir = path.join(process.cwd(), 'uploads');
-      await fs.promises.mkdir(uploadsDir, { recursive: true });
-      const filePath = path.join(uploadsDir, fileName);
-      await fs.promises.writeFile(filePath, webpBuffer);
-
-      const apiUrl = process.env.API_URL ?? 'http://localhost:5500';
-      imageUrl = `${apiUrl}/uploads/${fileName}`;
-      this.logger.log(`Image WebP enregistrée en local : ${filePath}`);
+    if (files.logo) {
+      logoUrl = await this.processAndUploadImage(files.logo.buffer, `${slug}-logo.webp`);
+    } else if (files.file) {
+      logoUrl = await this.processAndUploadImage(files.file.buffer, `${slug}.webp`);
     }
 
-    // 4. Génération du QR code en DataURL (base64 PNG)
+    if (files.menu && files.menu.length > 0) {
+      for (let i = 0; i < files.menu.length; i++) {
+        const menuFile = files.menu[i];
+        const menuUrl = await this.processAndUploadImage(menuFile.buffer, `${slug}-menu-${i}.webp`);
+        menuImagesUrls.push(menuUrl);
+      }
+    }
+
+    const primaryImageUrl = logoUrl || menuImagesUrls[0] || '';
+
+    // 3. Génération du QR code selon le style choisi
     const appUrl = process.env.APP_URL ?? 'http://localhost:3000';
     const cardUrl = `${appUrl}/c/${slug}`;
+    const qrCode = await this.generateStyledQrCode(cardUrl, metadata?.qrStyle);
 
-    const qrCode = await QRCode.toDataURL(cardUrl, {
-      width: 400,
-      margin: 2,
-      color: {
-        dark: '#181411',
-        light: '#ffffff',
-      },
-    });
-
-    // 5. Enregistrement dans PostgreSQL via Prisma
-    const createData: Record<string, unknown> = {
+    // 4. Enregistrement dans PostgreSQL via Prisma
+    const createData: Prisma.CardCreateInput = {
       slug,
-      imageUrl,
+      imageUrl: primaryImageUrl,
+      restaurantName: metadata?.restaurantName ?? null,
+      logoUrl: logoUrl ?? null,
+      locationUrl: metadata?.locationUrl ?? null,
+      phoneNumber: metadata?.phoneNumber ?? null,
+      menuImages: menuImagesUrls.length > 0 ? JSON.stringify(menuImagesUrls) : null,
+      themeId: metadata?.themeId ?? 'theme-1',
+      qrStyle: metadata?.qrStyle ?? 'style-1',
+      userName: metadata?.userName ?? null,
+      clientName: metadata?.clientName ?? null,
+      workDone: metadata?.workDone ?? null,
+      amountReceived: metadata?.amountReceived ?? null,
     };
-    if (metadata?.userName) createData.userName = metadata.userName;
-    if (metadata?.clientName) createData.clientName = metadata.clientName;
-    if (metadata?.workDone) createData.workDone = metadata.workDone;
-    if (metadata?.amountReceived) createData.amountReceived = metadata.amountReceived;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const card = (await this.prisma.card.create({
-      data: createData as any,
-    })) as any;
+    const card: Card = await this.prisma.card.create({
+      data: createData,
+    });
 
     return {
       id: card.id.toString(),
       slug: card.slug,
       imageUrl: card.imageUrl,
+      restaurantName: card.restaurantName ?? null,
+      logoUrl: card.logoUrl ?? null,
+      locationUrl: card.locationUrl ?? null,
+      phoneNumber: card.phoneNumber ?? null,
+      menuImages: menuImagesUrls,
+      themeId: card.themeId ?? 'theme-1',
+      qrStyle: card.qrStyle ?? 'style-1',
       userName: card.userName ?? null,
       clientName: card.clientName ?? null,
       workDone: card.workDone ?? null,
@@ -142,10 +215,9 @@ export class CardsService {
   }
 
   async getCardBySlug(slug: string) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const card = (await this.prisma.card.findUnique({
       where: { slug },
-    })) as any;
+    }));
 
     if (!card) {
       throw new NotFoundException(`Carte introuvable pour le slug "${slug}"`);
@@ -153,10 +225,26 @@ export class CardsService {
 
     const appUrl = process.env.APP_URL ?? 'http://localhost:3000';
 
+    let menuImages: string[] = [];
+    if (card.menuImages) {
+      try {
+        menuImages = JSON.parse(card.menuImages);
+      } catch {
+        menuImages = [card.menuImages];
+      }
+    }
+
     return {
       id: card.id.toString(),
       slug: card.slug,
       imageUrl: card.imageUrl,
+      restaurantName: card.restaurantName ?? null,
+      logoUrl: card.logoUrl ?? null,
+      locationUrl: card.locationUrl ?? null,
+      phoneNumber: card.phoneNumber ?? null,
+      menuImages,
+      themeId: card.themeId ?? 'theme-1',
+      qrStyle: card.qrStyle ?? 'style-1',
       userName: card.userName ?? null,
       clientName: card.clientName ?? null,
       workDone: card.workDone ?? null,
@@ -167,23 +255,40 @@ export class CardsService {
   }
 
   async getAllCards() {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const cards = (await this.prisma.card.findMany({
+    const cards: Card[] = await this.prisma.card.findMany({
       orderBy: { createdAt: 'desc' },
-    })) as any[];
+    });
 
     const appUrl = process.env.APP_URL ?? 'http://localhost:3000';
 
-    return cards.map((card) => ({
-      id: card.id.toString(),
-      slug: card.slug,
-      imageUrl: card.imageUrl,
-      userName: card.userName ?? null,
-      clientName: card.clientName ?? null,
-      workDone: card.workDone ?? null,
-      amountReceived: card.amountReceived ?? null,
-      cardUrl: `${appUrl}/c/${card.slug}`,
-      createdAt: card.createdAt,
-    }));
+    return cards.map((card) => {
+      let menuImages: string[] = [];
+      if (card.menuImages) {
+        try {
+          menuImages = JSON.parse(card.menuImages);
+        } catch {
+          menuImages = [card.menuImages];
+        }
+      }
+
+      return {
+        id: card.id.toString(),
+        slug: card.slug,
+        imageUrl: card.imageUrl,
+        restaurantName: card.restaurantName ?? null,
+        logoUrl: card.logoUrl ?? null,
+        locationUrl: card.locationUrl ?? null,
+        phoneNumber: card.phoneNumber ?? null,
+        menuImages,
+        themeId: card.themeId ?? 'theme-1',
+        qrStyle: card.qrStyle ?? 'style-1',
+        userName: card.userName ?? null,
+        clientName: card.clientName ?? null,
+        workDone: card.workDone ?? null,
+        amountReceived: card.amountReceived ?? null,
+        cardUrl: `${appUrl}/c/${card.slug}`,
+        createdAt: card.createdAt,
+      };
+    });
   }
 }

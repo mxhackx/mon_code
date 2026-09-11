@@ -5,45 +5,63 @@ import {
   Param,
   Body,
   UseInterceptors,
-  UploadedFile,
+  UploadedFiles,
   BadRequestException,
-  ParseFilePipe,
-  MaxFileSizeValidator,
-  FileTypeValidator,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import 'multer';
 import { CardsService } from './cards.service';
+
+export class CreateCardDto {
+  userName?: string;
+  clientName?: string;
+  workDone?: string;
+  amountReceived?: string;
+  restaurantName?: string;
+  locationUrl?: string;
+  phoneNumber?: string;
+  themeId?: string;
+  qrStyle?: string;
+}
 
 @Controller('cards')
 export class CardsController {
   constructor(private readonly cardsService: CardsService) {}
 
   @Post()
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      { name: 'file', maxCount: 1 },
+      { name: 'logo', maxCount: 1 },
+      { name: 'menu', maxCount: 10 },
+    ]),
+  )
   async uploadCard(
-    @UploadedFile(
-      new ParseFilePipe({
-        validators: [
-          new MaxFileSizeValidator({ maxSize: 10 * 1024 * 1024 }), // 10 Mo
-          new FileTypeValidator({ fileType: /(jpg|jpeg|png|webp)$/i }),
-        ],
-        fileIsRequired: true,
-      }),
-    )
-    file: Express.Multer.File,
-    @Body()
-    body?: {
-      userName?: string;
-      clientName?: string;
-      workDone?: string;
-      amountReceived?: string;
+    @UploadedFiles()
+    files: {
+      file?: Express.Multer.File[];
+      logo?: Express.Multer.File[];
+      menu?: Express.Multer.File[];
     },
+    @Body()
+    body?: CreateCardDto,
   ) {
-    if (!file) {
-      throw new BadRequestException('Veuillez fournir une image.');
+    const singleFile = files?.file?.[0];
+    const logoFile = files?.logo?.[0];
+    const menuFiles = files?.menu ?? [];
+
+    if (!singleFile && !logoFile && menuFiles.length === 0) {
+      throw new BadRequestException('Veuillez fournir au moins une image (carte, logo ou menu).');
     }
-    return this.cardsService.createCard(file, body);
+
+    return this.cardsService.createCard(
+      {
+        file: singleFile,
+        logo: logoFile,
+        menu: menuFiles,
+      },
+      body,
+    );
   }
 
   @Get()

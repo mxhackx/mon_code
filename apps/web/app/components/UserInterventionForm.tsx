@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, FormEvent, RefObject } from "react";
+import { useState, FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { useFile, UserInfo } from "../context/FileContext";
 
 interface UserInterventionFormProps {
-  fileInputRef: RefObject<HTMLInputElement | null>;
   onBack: () => void;
 }
 
-export default function UserInterventionForm({ fileInputRef, onBack }: UserInterventionFormProps) {
+export default function UserInterventionForm({ onBack }: UserInterventionFormProps) {
+  const router = useRouter();
   const { userInfo, setUserInfo } = useFile();
   const [userFormError, setUserFormError] = useState<string | null>(null);
 
@@ -33,7 +34,7 @@ export default function UserInterventionForm({ fileInputRef, onBack }: UserInter
     }
 
     setUserFormError(null);
-    fileInputRef.current?.click();
+    router.push("/restaurant");
   };
 
   return (
@@ -127,10 +128,7 @@ export default function UserInterventionForm({ fileInputRef, onBack }: UserInter
 
         <div style={{ marginTop: "8px" }}>
           <button type="submit" className="cta-button" style={{ width: "100%" }}>
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M12 3v11m0 0 4-4m-4 4-4-4M5 16v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3" />
-            </svg>
-            Valider et charger ma carte de visite
+            Continuer vers les informations du restaurant →
           </button>
         </div>
       </form>

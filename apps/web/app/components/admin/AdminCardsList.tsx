@@ -11,6 +11,10 @@ export interface CardSummary {
   clientName?: string | null;
   workDone?: string | null;
   amountReceived?: string | null;
+  restaurantName?: string | null;
+  phoneNumber?: string | null;
+  themeId?: string | null;
+  qrStyle?: string | null;
   createdAt: string;
 }
 
@@ -66,9 +70,23 @@ export default function AdminCardsList({ cards, isLoading, onCreateFirstCard }: 
             })}
           </small>
 
-          {/* Métadonnées intervention / client */}
-          {(card.clientName || card.userName || card.workDone) && (
+          {/* Métadonnées restaurant & intervention */}
+          {(card.restaurantName || card.clientName || card.userName || card.workDone) && (
             <div className="admin-card-meta">
+              {card.restaurantName && (
+                <div className="admin-meta-row">
+                  <span className="meta-label">Restaurant :</span>
+                  <span className="meta-val" style={{ color: "var(--orange-dark)", fontWeight: 700 }}>
+                    {card.restaurantName}
+                  </span>
+                </div>
+              )}
+              {card.phoneNumber && (
+                <div className="admin-meta-row">
+                  <span className="meta-label">Tél / WhatsApp :</span>
+                  <span className="meta-val">{card.phoneNumber}</span>
+                </div>
+              )}
               {card.clientName && (
                 <div className="admin-meta-row">
                   <span className="meta-label">Client :</span>

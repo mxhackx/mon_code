@@ -1,34 +1,15 @@
 "use client";
 
-import { useEffect, useState, useRef, ChangeEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useFile } from "./context/FileContext";
-import RoleSelector from "./components/RoleSelector";
-import UserInterventionForm from "./components/UserInterventionForm";
-import AdminLogin from "./components/admin/AdminLogin";
-import AdminDashboard from "./components/admin/AdminDashboard";
 
 type Scene = "welcome" | "splash" | "ready";
 
-export default function Home() {
-  const { setFile, hasSeenIntro, setHasSeenIntro, selectedRole, setSelectedRole } = useFile();
+export default function HomePage() {
+  const { hasSeenIntro, setHasSeenIntro } = useFile();
   const [scene, setScene] = useState<Scene>(() => (hasSeenIntro ? "ready" : "welcome"));
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const router = useRouter();
 
-  // État d'authentification Administrateur
-  const [adminToken, setAdminToken] = useState<string | null>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        return sessionStorage.getItem("genqr_admin_token") || sessionStorage.getItem("visitcard_admin_token");
-      } catch {
-        // ignore storage restriction
-      }
-    }
-    return null;
-  });
-
-  // Animation d'introduction au premier chargement
   useEffect(() => {
     if (hasSeenIntro) {
       return;
@@ -46,53 +27,12 @@ export default function Home() {
     };
   }, [hasSeenIntro, setHasSeenIntro]);
 
-  // Récupère le fichier choisi et redirige vers la page de chargement
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setHasSeenIntro(true);
-    setSelectedRole("user");
-    setFile(file);
-    event.target.value = "";
-    router.push("/charger");
-  };
-
-  // Connexion Admin réussie
-  const handleLoginSuccess = (token: string) => {
-    setAdminToken(token);
-    try {
-      sessionStorage.setItem("genqr_admin_token", token);
-    } catch {
-      // ignore
-    }
-  };
-
-  // Déconnexion Admin
-  const handleAdminLogout = () => {
-    setAdminToken(null);
-    try {
-      sessionStorage.removeItem("genqr_admin_token");
-      sessionStorage.removeItem("visitcard_admin_token");
-    } catch {
-      // ignore
-    }
-  };
-
   const isWelcome = scene === "welcome";
 
   return (
     <main className={`landing-page scene-${scene}`}>
-      {/* Input invisible pour ouvrir l'explorateur de fichiers de l'appareil */}
-      <input
-        type="file"
-        ref={fileInputRef}
-        onChange={handleFileChange}
-        accept="image/png,image/jpeg,.jpg,.jpeg,.png"
-        style={{ display: "none" }}
-      />
-
       {!hasSeenIntro && <div className="splash" aria-hidden="true" />}
+
       {!isWelcome && (
         <>
           <div className="ambient ambient-one" />
@@ -102,10 +42,10 @@ export default function Home() {
 
       {!isWelcome && (
         <header className="site-header">
-          <a className="brand brand-small" href="#accueil" aria-label="GenQR - accueil">
+          <Link className="brand brand-small" href="/" aria-label="GenQR - accueil">
             <span>Gen</span>QR
-          </a>
-          <p className="header-note">Vos contacts, en un scan.</p>
+          </Link>
+          <p className="header-note">Vos menus digitaux, en un scan.</p>
         </header>
       )}
 
@@ -117,41 +57,76 @@ export default function Home() {
         )}
 
         {!isWelcome && (
-          <div
-            className="action-panel"
-            style={{
-              width: "100%",
-              maxWidth: selectedRole === "admin" && adminToken ? "820px" : selectedRole === null ? "680px" : "650px",
-            }}
-          >
-            {/* 1. Écran de sélection du rôle (Admin / User) */}
-            {selectedRole === null && (
-              <RoleSelector onSelectRole={setSelectedRole} />
-            )}
+          <div className="action-panel" style={{ maxWidth: "660px", width: "100%" }}>
+            <p className="eyebrow">Menus Digitaux & QR Codes Professionnels</p>
+            <h1 className="brand brand-hero" style={{ margin: "0 0 16px" }}>
+              <span>Gen</span>QR
+            </h1>
+            <p className="hero-description" style={{ margin: "0 auto 30px" }}>
+              Partagez vos menus de restaurants et cartes professionnelles en un scan.
+              Personnalisez votre thème visuel, téléchargez votre QR code officiel et recevez vos commandes directement sur WhatsApp.
+            </p>
 
-            {/* 2. Écran Utilisateur : Formulaire d'intervention obligatoire puis chargement de carte */}
-            {selectedRole === "user" && (
-              <UserInterventionForm
-                fileInputRef={fileInputRef}
-                onBack={() => setSelectedRole(null)}
-              />
-            )}
+            <div className="action-buttons" style={{ marginBottom: "28px" }}>
+              <Link href="/choix-profil" className="cta-button" style={{ padding: "0 32px", fontSize: "16px" }}>
+                <span>Commencer l&apos;expérience</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </Link>
+            </div>
 
-            {/* 3. Écran Administrateur : Connexion ou Dashboard */}
-            {selectedRole === "admin" && (
-              !adminToken ? (
-                <AdminLogin
-                  onLoginSuccess={handleLoginSuccess}
-                  onBack={() => setSelectedRole(null)}
-                />
-              ) : (
-                <AdminDashboard
-                  adminToken={adminToken}
-                  onLogout={handleAdminLogout}
-                  onNavigateToUser={() => setSelectedRole("user")}
-                />
-              )
-            )}
+            {/* Atouts clés */}
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "10px",
+                justifyContent: "center",
+                fontSize: "12.5px",
+                color: "#6e625b",
+              }}
+            >
+              <span
+                style={{
+                  background: "rgba(255, 255, 255, 0.7)",
+                  border: "1px solid rgba(0,0,0,0.06)",
+                  padding: "6px 14px",
+                  borderRadius: "999px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
+              >
+                🍽️ 5 thèmes de menu
+              </span>
+              <span
+                style={{
+                  background: "rgba(255, 255, 255, 0.7)",
+                  border: "1px solid rgba(0,0,0,0.06)",
+                  padding: "6px 14px",
+                  borderRadius: "999px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
+              >
+                🎨 5 designs de QR code
+              </span>
+              <span
+                style={{
+                  background: "rgba(255, 255, 255, 0.7)",
+                  border: "1px solid rgba(0,0,0,0.06)",
+                  padding: "6px 14px",
+                  borderRadius: "999px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
+              >
+                💬 Contact WhatsApp direct
+              </span>
+            </div>
           </div>
         )}
       </section>
