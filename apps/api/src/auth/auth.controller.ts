@@ -20,15 +20,17 @@ export class AuthController {
   @Patch('credentials')
   async updateCredentials(
     @Headers('authorization') authHeader: string,
-    @Body('email') email?: string,
-    @Body('password') password?: string,
+    @Body() body: { email?: string; newEmail?: string; password?: string; newPassword?: string },
   ) {
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       throw new UnauthorizedException('Token Bearer manquant');
     }
 
     const token = authHeader.split(' ')[1];
-    return this.authService.updateCredentials(token, email, password);
+    const emailToUpdate = body?.email ?? body?.newEmail;
+    const passwordToUpdate = body?.password ?? body?.newPassword;
+
+    return this.authService.updateCredentials(token, emailToUpdate, passwordToUpdate);
   }
 }
 

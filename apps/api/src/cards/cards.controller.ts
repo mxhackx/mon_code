@@ -4,13 +4,18 @@ import {
   Post,
   Param,
   Body,
+  Res,
+  Headers,
   UseInterceptors,
   UploadedFiles,
   BadRequestException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import type { Response } from 'express';
 import 'multer';
 import { CardsService } from './cards.service';
+import { AuthService } from '../auth/auth.service';
 
 export class CreateCardDto {
   userName?: string;
@@ -26,15 +31,34 @@ export class CreateCardDto {
 
 @Controller('cards')
 export class CardsController {
-  constructor(private readonly cardsService: CardsService) {}
+  constructor(
+    private readonly cardsService: CardsService,
+    private readonly authService: AuthService,
+  ) {}
 
   @Post()
   @UseInterceptors(
-    FileFieldsInterceptor([
-      { name: 'file', maxCount: 1 },
-      { name: 'logo', maxCount: 1 },
-      { name: 'menu', maxCount: 10 },
-    ]),
+    FileFieldsInterceptor(
+      [
+        { name: 'file', maxCount: 1 },
+        { name: 'logo', maxCount: 1 },
+        { name: 'menu', maxCount: 10 },
+      ],
+      {
+        limits: {
+          fileSize: 10 * 1024 * 1024, // Limite de 10 Mo par fichier
+        },
+        fileFilter: (_req, file, callback) => {
+          if (!file.mimetype || !file.mimetype.startsWith('image/')) {
+            return callback(
+              new BadRequestException(`Le fichier "${file.originalname}" n'est pas une image valide (mimetype: ${file.mimetype})`),
+              false,
+            );
+          }
+          callback(null, true);
+        },
+      },
+    ),
   )
   async uploadCard(
     @UploadedFiles()
@@ -65,8 +89,26 @@ export class CardsController {
   }
 
   @Get()
-  async getAllCards() {
+  async getAllCards(@Headers('authorization') authHeader?: string) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new UnauthorizedException('Accès réservé aux administrateurs. Token d’authentification manquant.');
+    }
+
+    const token = authHeader.split(' ')[1];
+    const isValid = await this.authService.validateAdminToken(token);
+    if (!isValid) {
+      throw new UnauthorizedException('Session administrateur expirée ou invalide');
+    }
+
     return this.cardsService.getAllCards();
+  }
+
+  @Get(':slug/download')
+  async downloadCard(@Param('slug') slug: string, @Res() res: Response) {
+    const fileData = await this.cardsService.getCardFile(slug);
+    res.setHeader('Content-Type', fileData.contentType);
+    res.setHeader('Content-Disposition', `attachment; filename="${fileData.filename}"`);
+    res.send(fileData.buffer);
   }
 
   @Get(':slug')

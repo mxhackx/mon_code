@@ -172,13 +172,22 @@ export class CardsService {
     const cardUrl = `${appUrl}/c/${slug}`;
     const qrCode = await this.generateStyledQrCode(cardUrl, metadata?.qrStyle);
 
+    // Validation de sécurité de l'URL de localisation (protection anti-XSS)
+    let safeLocationUrl: string | null = null;
+    if (metadata?.locationUrl) {
+      const trimmedLocation = metadata.locationUrl.trim();
+      if (trimmedLocation.startsWith('http://') || trimmedLocation.startsWith('https://')) {
+        safeLocationUrl = trimmedLocation;
+      }
+    }
+
     // 4. Enregistrement dans PostgreSQL via Prisma
     const createData: Prisma.CardCreateInput = {
       slug,
       imageUrl: primaryImageUrl,
       restaurantName: metadata?.restaurantName ?? null,
       logoUrl: logoUrl ?? null,
-      locationUrl: metadata?.locationUrl ?? null,
+      locationUrl: safeLocationUrl,
       phoneNumber: metadata?.phoneNumber ?? null,
       menuImages: menuImagesUrls.length > 0 ? JSON.stringify(menuImagesUrls) : null,
       themeId: metadata?.themeId ?? 'theme-1',
@@ -290,5 +299,64 @@ export class CardsService {
         createdAt: card.createdAt,
       };
     });
+  }
+
+  /**
+   * Récupère le fichier binaire de la carte pour téléchargement direct
+   */
+  async getCardFile(slug: string): Promise<{ buffer: Buffer; contentType: string; filename: string }> {
+    const card = await this.prisma.card.findUnique({
+      where: { slug },
+    });
+
+    if (!card) {
+      throw new NotFoundException(`Carte introuvable pour le slug "${slug}"`);
+    }
+
+    const filename = `carte-${slug}.webp`;
+    const contentType = 'image/webp';
+
+    if (this.supabase) {
+      const storageKey = card.imageUrl.includes(`/${this.bucketName}/`)
+        ? card.imageUrl.split(`/${this.bucketName}/`)[1]
+        : `${slug}.webp`;
+
+      const { data, error } = await this.supabase.storage
+        .from(this.bucketName)
+        .download(storageKey);
+
+      if (!error && data) {
+        const arrayBuffer = await data.arrayBuffer();
+        return {
+          buffer: Buffer.from(arrayBuffer),
+          contentType,
+          filename,
+        };
+      }
+    }
+
+    // Si local ou si Supabase direct
+    const uploadsDir = path.join(process.cwd(), 'uploads');
+    const localFileName = path.basename(card.imageUrl);
+    const localPath = path.join(uploadsDir, localFileName);
+    if (fs.existsSync(localPath)) {
+      const buffer = await fs.promises.readFile(localPath);
+      return { buffer, contentType, filename };
+    }
+
+    // Repli via fetch HTTP sur card.imageUrl
+    if (card.imageUrl.startsWith('http://') || card.imageUrl.startsWith('https://')) {
+      const response = await fetch(card.imageUrl);
+      if (response.ok) {
+        const arrayBuffer = await response.arrayBuffer();
+        return {
+          buffer: Buffer.from(arrayBuffer),
+          contentType,
+          filename,
+        };
+      }
+    }
+
+    throw new NotFoundException(`Le fichier image pour la carte "${slug}" est introuvable`);
   }
 }

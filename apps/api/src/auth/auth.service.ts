@@ -107,6 +107,26 @@ export class AuthService implements OnModuleInit {
 
   /**
    * Mise à jour des identifiants (email et/ou mot de passe)
+  /**
+   * Valide un jeton Bearer admin auprès de Supabase Auth
+   */
+  async validateAdminToken(token: string): Promise<boolean> {
+    if (!token) return false;
+    if (!this.supabase) return false;
+
+    try {
+      const { data, error } = await this.supabase.auth.getUser(token);
+      if (error || !data?.user) {
+        return false;
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Mise à jour des identifiants (email et/ou mot de passe)
    */
   async updateCredentials(token: string, newEmail?: string, newPassword?: string) {
     if (!this.supabase) {
@@ -123,18 +143,21 @@ export class AuthService implements OnModuleInit {
       throw new UnauthorizedException('Session expirée ou non autorisée');
     }
 
-    if (!newEmail && !newPassword) {
+    const trimmedEmail = newEmail?.trim();
+    const trimmedPassword = newPassword?.trim();
+
+    if (!trimmedEmail && !trimmedPassword) {
       throw new BadRequestException('Veuillez fournir un nouvel email ou un nouveau mot de passe');
     }
 
     // 2. Mise à jour dans Supabase Auth
     const updatePayload: { email?: string; password?: string; email_confirm?: boolean } = {};
-    if (newEmail && newEmail.trim()) {
-      updatePayload.email = newEmail.trim();
+    if (trimmedEmail) {
+      updatePayload.email = trimmedEmail;
       updatePayload.email_confirm = true;
     }
-    if (newPassword && newPassword.trim()) {
-      updatePayload.password = newPassword.trim();
+    if (trimmedPassword) {
+      updatePayload.password = trimmedPassword;
     }
 
     const { data: updatedUser, error: updateError } =
@@ -144,7 +167,15 @@ export class AuthService implements OnModuleInit {
       throw new BadRequestException(`Erreur mise à jour Supabase: ${updateError.message}`);
     }
 
-    // 3. Synchronisation du fichier .env pour préserver les nouvelles valeurs
+    // 3. Mise à jour en mémoire pour les connexions subséquentes
+    if (trimmedEmail) {
+      process.env.ADMIN_EMAIL = trimmedEmail;
+    }
+    if (trimmedPassword) {
+      process.env.ADMIN_PASSWORD = trimmedPassword;
+    }
+
+    // 4. Synchronisation facultative de secours sur disque (sans bloquer en cas de filesystem éphémère/read-only)
     try {
       const possiblePaths = [
         path.join(process.cwd(), '.env'),
@@ -155,31 +186,27 @@ export class AuthService implements OnModuleInit {
       if (envPath) {
         let envContent = fs.readFileSync(envPath, 'utf8');
 
-        if (newEmail && newEmail.trim()) {
-          const emailVal = newEmail.trim();
+        if (trimmedEmail) {
           if (envContent.includes('ADMIN_EMAIL=')) {
-            envContent = envContent.replace(/ADMIN_EMAIL=.*/g, `ADMIN_EMAIL="${emailVal}"`);
+            envContent = envContent.replace(/ADMIN_EMAIL=.*/g, `ADMIN_EMAIL="${trimmedEmail}"`);
           } else {
-            envContent += `\nADMIN_EMAIL="${emailVal}"`;
+            envContent += `\nADMIN_EMAIL="${trimmedEmail}"`;
           }
-          process.env.ADMIN_EMAIL = emailVal;
         }
 
-        if (newPassword && newPassword.trim()) {
-          const passVal = newPassword.trim();
+        if (trimmedPassword) {
           if (envContent.includes('ADMIN_PASSWORD=')) {
-            envContent = envContent.replace(/ADMIN_PASSWORD=.*/g, `ADMIN_PASSWORD="${passVal}"`);
+            envContent = envContent.replace(/ADMIN_PASSWORD=.*/g, `ADMIN_PASSWORD="${trimmedPassword}"`);
           } else {
-            envContent += `\nADMIN_PASSWORD="${passVal}"`;
+            envContent += `\nADMIN_PASSWORD="${trimmedPassword}"`;
           }
-          process.env.ADMIN_PASSWORD = passVal;
         }
 
         fs.writeFileSync(envPath, envContent, 'utf8');
         this.logger.log('Fichier .env synchronisé avec les nouveaux identifiants');
       }
-    } catch (e: unknown) {
-      this.logger.warn('Impossible de synchroniser le fichier .env sur disque:', e);
+    } catch {
+      // Ignorer silencieusement si le conteneur est en lecture seule
     }
 
     return {

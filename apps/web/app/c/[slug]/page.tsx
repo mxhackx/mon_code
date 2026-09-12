@@ -107,6 +107,32 @@ export default function CardViewPage() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [lightboxOpen, handlePrevImage, handleNextImage]);
 
+  const isRestaurantView = Boolean(card?.restaurantName || menuImages.length > 0);
+
+  // Téléchargement automatique immédiat de la carte de visite au scan (mode direct)
+  useEffect(() => {
+    if (!card || isRestaurantView) return;
+
+    let isCancelled = false;
+
+    const autoDownload = () => {
+      if (isCancelled || !card) return;
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5500";
+      const link = document.createElement("a");
+      link.href = `${apiUrl}/cards/${card.slug}/download`;
+      link.download = `carte-visite-${card.slug}.webp`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    };
+
+    const timer = setTimeout(autoDownload, 300);
+    return () => {
+      isCancelled = true;
+      clearTimeout(timer);
+    };
+  }, [card, isRestaurantView]);
+
   // Déterminer la classe du thème (défaut : theme-1)
   const themeClass = card?.themeId && THEME_INFO[card.themeId]
     ? THEME_INFO[card.themeId].className
@@ -116,6 +142,16 @@ export default function CardViewPage() {
     ? THEME_INFO[card.themeId].label
     : "Menu Digital";
 
+  // Validation de sécurité pour les URL externes (protection anti-XSS contre javascript:)
+  const safeLocationUrl = (() => {
+    if (!card?.locationUrl) return null;
+    const trimmed = card.locationUrl.trim();
+    if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+      return trimmed;
+    }
+    return null;
+  })();
+
   // URL WhatsApp personnalisée
   const cleanPhone = card?.phoneNumber ? card.phoneNumber.replace(/[^0-9]/g, "") : null;
   const whatsappUrl = cleanPhone
@@ -124,8 +160,6 @@ export default function CardViewPage() {
       )}`
     : null;
 
-  const isRestaurantView = Boolean(card?.restaurantName || menuImages.length > 0);
-
   // Écran de chargement
   if (loading) {
     return (
@@ -133,10 +167,9 @@ export default function CardViewPage() {
         <div className="ambient ambient-one" />
         <div className="ambient ambient-two" />
         <header className="site-header">
-          <Link className="brand brand-small" href="/choix-profil" aria-label="GenQR - accueil">
+          <Link className="brand brand-small" href="/" aria-label="GenQR - accueil">
             <span>Gen</span>QR
           </Link>
-          <p className="header-note">Votre menu, en un scan.</p>
           <p className="header-note">Vos menus digitaux, en un scan.</p>
         </header>
 
@@ -198,82 +231,75 @@ export default function CardViewPage() {
     );
   }
 
-  // Si c'est une carte de visite classique sans informations restaurant
+  // Mode Carte de Visite Directe : "sur aucun plan sans rien en background, juste la carte correspondante et son téléchargement directement lancé"
   if (!isRestaurantView) {
     return (
-      <main className="landing-page scene-ready">
-        <div className="ambient ambient-one" />
-        <div className="ambient ambient-two" />
+      <main
+        style={{
+          minHeight: "100svh",
+          width: "100%",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "#000000",
+          margin: 0,
+          padding: "16px",
+          boxSizing: "border-box",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        {/* Affichage pur et centré de la carte de visite sans aucun arrière-plan perturbateur */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={card.imageUrl}
+          alt="Carte de visite"
+          style={{
+            maxWidth: "96vw",
+            maxHeight: "88vh",
+            width: "auto",
+            height: "auto",
+            objectFit: "contain",
+            borderRadius: "14px",
+            boxShadow: "0 14px 48px rgba(0, 0, 0, 0.7)",
+            display: "block",
+          }}
+        />
 
-        <header className="site-header">
-          <Link className="brand brand-small" href="/choix-profil" aria-label="GenQR - accueil">
-            <span>Gen</span>QR
-          </Link>
-          <p className="header-note">Vos contacts, en un scan.</p>
-          <p className="header-note">Vos menus digitaux, en un scan.</p>
-        </header>
-
-        <section className="hero">
-          <div className="action-panel" style={{ opacity: 1, transform: "none", width: "100%", maxWidth: "680px" }}>
-            <p className="eyebrow">Carte partagée</p>
-            <h1 className="brand" style={{ fontSize: "clamp(28px, 4vw, 42px)", margin: "0 0 20px" }}>
-              <span>Gen</span>QR
-            </h1>
-
-            <div
-              style={{
-                background: "#ffffff",
-                padding: "16px",
-                borderRadius: "24px",
-                boxShadow: "0 18px 45px rgba(24, 20, 17, 0.12)",
-                margin: "0 auto 28px",
-                maxWidth: "540px",
-                overflow: "hidden",
-              }}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={card.imageUrl}
-                alt="Carte enregistrée"
-                style={{
-                  width: "100%",
-                  height: "auto",
-                  maxHeight: "420px",
-                  objectFit: "contain",
-                  borderRadius: "16px",
-                  display: "block",
-                }}
-              />
-            </div>
-
-            <div className="action-buttons">
-              <a
-                href={card.imageUrl}
-                download={`genqr-${card.slug}.png`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="cta-button"
-              >
-                <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 3v11m0 0 4-4m-4 4-4-4M5 16v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3" />
-                </svg>
-                Enregistrer l&apos;image
-              </a>
-
-              <Link
-                href="/"
-                className="cta-button"
-                style={{ background: "transparent", color: "var(--ink)", borderColor: "currentColor" }}
-              >
-                Créer ma carte
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        <footer className="site-footer">
-          <span className="footer-dot" /> Simple à créer. Facile à partager.
-        </footer>
+        {/* Bouton discret de téléchargement / secours en bas de l'écran */}
+        <div
+          style={{
+            position: "fixed",
+            bottom: "20px",
+            zIndex: 30,
+          }}
+        >
+          <a
+            href={`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5500"}/cards/${card.slug}/download`}
+            download={`carte-visite-${card.slug}.webp`}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              background: "rgba(255, 255, 255, 0.18)",
+              backdropFilter: "blur(12px)",
+              color: "#ffffff",
+              fontSize: "13px",
+              fontWeight: 600,
+              padding: "9px 20px",
+              borderRadius: "999px",
+              textDecoration: "none",
+              border: "1px solid rgba(255, 255, 255, 0.25)",
+              boxShadow: "0 8px 24px rgba(0, 0, 0, 0.4)",
+            }}
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2">
+              <path d="M12 3v11m0 0 4-4m-4 4-4-4M5 16v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3" />
+            </svg>
+            <span>Télécharger la carte</span>
+          </a>
+        </div>
       </main>
     );
   }
@@ -326,9 +352,9 @@ export default function CardViewPage() {
           )}
 
           <div className="resto-sub-actions">
-            {card.locationUrl && (
+            {safeLocationUrl && (
               <a
-                href={card.locationUrl}
+                href={safeLocationUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-resto-secondary"

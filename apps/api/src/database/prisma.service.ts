@@ -13,11 +13,11 @@ export class PrismaService
   private readonly pool: Pool;
 
   constructor() {
-    const connectionString = process.env.DIRECT_URL;
+    const connectionString = process.env.DATABASE_URL || process.env.DIRECT_URL;
 
     if (!connectionString) {
       throw new Error(
-        "DATABASE_URL n'est pas défini dans les variables d'environnement.",
+        "Aucune variable de connexion à la base de données (DATABASE_URL ou DIRECT_URL) n'est définie dans l'environnement.",
       );
     }
 

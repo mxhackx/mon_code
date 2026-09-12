@@ -33,9 +33,15 @@ export default function AdminSettingsForm({ adminToken }: AdminSettingsFormProps
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5500";
-      const payload: { newEmail?: string; newPassword?: string } = {};
-      if (newEmail.trim()) payload.newEmail = newEmail.trim();
-      if (newPassword.trim()) payload.newPassword = newPassword.trim();
+      const payload: { email?: string; password?: string; newEmail?: string; newPassword?: string } = {};
+      if (newEmail.trim()) {
+        payload.email = newEmail.trim();
+        payload.newEmail = newEmail.trim();
+      }
+      if (newPassword.trim()) {
+        payload.password = newPassword.trim();
+        payload.newPassword = newPassword.trim();
+      }
 
       const res = await fetch(`${apiUrl}/auth/admin/credentials`, {
         method: "PATCH",

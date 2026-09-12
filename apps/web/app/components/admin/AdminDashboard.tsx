@@ -13,13 +13,17 @@ interface AdminDashboardProps {
 export default function AdminDashboard({ adminToken, onLogout, onNavigateToUser }: AdminDashboardProps) {
   const [adminTab, setAdminTab] = useState<"cards" | "settings">("cards");
   const [cardsList, setCardsList] = useState<CardSummary[]>([]);
-  const [isLoadingCards, setIsLoadingCards] = useState(false);
+  const [isLoadingCards, setIsLoadingCards] = useState(true);
 
   useEffect(() => {
     let isSubscribed = true;
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5500";
 
-    fetch(`${apiUrl}/cards`)
+    fetch(`${apiUrl}/cards`, {
+      headers: {
+        Authorization: `Bearer ${adminToken}`,
+      },
+    })
       .then((res) => (res.ok ? res.json() : []))
       .then((data: CardSummary[]) => {
         if (isSubscribed) {
