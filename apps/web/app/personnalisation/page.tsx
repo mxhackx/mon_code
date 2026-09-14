@@ -75,7 +75,7 @@ const QR_STYLES = [
   },
   {
     id: "style-2",
-    name: "Signature GenQR",
+    name: "Signature MonCode",
     desc: "Orange brand dynamique et moderne",
     previewColor: "#ef6a22",
     bgColor: "#ffffff",
@@ -183,8 +183,8 @@ export default function PersonnalisationPage() {
       <div className="ambient ambient-two" />
 
       <header className="site-header">
-        <Link className="brand brand-small" href="/" aria-label="GenQR - accueil">
-          <span>Gen</span>QR
+        <Link className="brand brand-small" href="/" aria-label="MonCode - accueil">
+          <span>Mon</span>Code
         </Link>
         <p className="header-note">Vos menus digitaux, en un scan.</p>
       </header>
@@ -239,7 +239,7 @@ export default function PersonnalisationPage() {
               <div className="action-buttons" style={{ flexWrap: "wrap", justifyContent: "center" }}>
                 <a
                   href={qrResult.qrCode}
-                  download={`genqr-menu-${qrResult.slug}.png`}
+                  download={`moncode-menu-${qrResult.slug}.png`}
                   className="cta-button"
                 >
                   <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
@@ -463,7 +463,7 @@ export default function PersonnalisationPage() {
       </section>
 
       <footer className="site-footer">
-        <p>Scannez et partagez en un instant • Propulsé par GenQR</p>
+        <p>Scannez et partagez en un instant • Propulsé par MonCode</p>
       </footer>
     </main>
   );

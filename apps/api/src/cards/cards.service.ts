@@ -50,11 +50,20 @@ export class CardsService {
    * Traite une image avec Sharp (optimisation WebP) et la stocke sur Supabase Storage ou en local
    */
   private async processAndUploadImage(buffer: Buffer, fileName: string): Promise<string> {
-    const webpBuffer = await sharp(buffer)
-      .rotate()
-      .resize({ width: 1600, withoutEnlargement: true })
-      .webp({ quality: 82 })
-      .toBuffer();
+    let webpBuffer: Buffer;
+    try {
+      webpBuffer = await sharp(buffer)
+        .rotate()
+        .resize({ width: 1600, withoutEnlargement: true })
+        .webp({ quality: 82 })
+        .toBuffer();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Format inconnu';
+      this.logger.error(`Erreur Sharp sur "${fileName}": ${msg}`);
+      throw new BadRequestException(
+        `L'image "${fileName}" est corrompue ou dans un format illisible. Veuillez fournir une image valide (PNG, JPEG, WEBP).`,
+      );
+    }
 
     if (this.supabase) {
       const { error: uploadError } = await this.supabase.storage
@@ -90,7 +99,7 @@ export class CardsService {
     let lightColor = '#ffffff';
 
     switch (qrStyle) {
-      case 'style-2': // Signature Orange GenQR
+      case 'style-2': // Signature Orange MonCode
         darkColor = '#ef6a22';
         lightColor = '#ffffff';
         break;
@@ -181,21 +190,25 @@ export class CardsService {
       }
     }
 
+    // Helper de normalisation : convertit les chaînes vides ou avec espaces seuls en null
+    const cleanStr = (val?: string | null): string | null =>
+      val && val.trim().length > 0 ? val.trim() : null;
+
     // 4. Enregistrement dans PostgreSQL via Prisma
     const createData: Prisma.CardCreateInput = {
       slug,
       imageUrl: primaryImageUrl,
-      restaurantName: metadata?.restaurantName ?? null,
+      restaurantName: cleanStr(metadata?.restaurantName),
       logoUrl: logoUrl ?? null,
       locationUrl: safeLocationUrl,
-      phoneNumber: metadata?.phoneNumber ?? null,
+      phoneNumber: cleanStr(metadata?.phoneNumber),
       menuImages: menuImagesUrls.length > 0 ? JSON.stringify(menuImagesUrls) : null,
-      themeId: metadata?.themeId ?? 'theme-1',
-      qrStyle: metadata?.qrStyle ?? 'style-1',
-      userName: metadata?.userName ?? null,
-      clientName: metadata?.clientName ?? null,
-      workDone: metadata?.workDone ?? null,
-      amountReceived: metadata?.amountReceived ?? null,
+      themeId: cleanStr(metadata?.themeId) ?? 'theme-1',
+      qrStyle: cleanStr(metadata?.qrStyle) ?? 'style-1',
+      userName: cleanStr(metadata?.userName),
+      clientName: cleanStr(metadata?.clientName),
+      workDone: cleanStr(metadata?.workDone),
+      amountReceived: cleanStr(metadata?.amountReceived),
     };
 
     const card: Card = await this.prisma.card.create({
@@ -243,6 +256,7 @@ export class CardsService {
       }
     }
 
+    // Endpoint public : exclusion stricte des données d'intervention internes (userName, clientName, workDone, amountReceived)
     return {
       id: card.id.toString(),
       slug: card.slug,

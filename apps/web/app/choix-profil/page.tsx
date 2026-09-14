@@ -24,8 +24,8 @@ export default function ChoixProfilPage() {
       <div className="ambient ambient-two" />
 
       <header className="site-header">
-        <Link className="brand brand-small" href="/" aria-label="GenQR - accueil">
-          <span>Gen</span>QR
+        <Link className="brand brand-small" href="/" aria-label="MonCode - accueil">
+          <span>Mon</span>Code
         </Link>
         <p className="header-note">Vos menus digitaux, en un scan.</p>
       </header>
@@ -107,7 +107,7 @@ export default function ChoixProfilPage() {
       </section>
 
       <footer className="site-footer">
-        <p>Scannez et partagez en un instant • Propulsé par GenQR</p>
+        <p>Scannez et partagez en un instant • Propulsé par MonCode</p>
       </footer>
     </main>
   );

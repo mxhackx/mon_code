@@ -42,8 +42,8 @@ export default function HomePage() {
 
       {!isWelcome && (
         <header className="site-header">
-          <Link className="brand brand-small" href="/" aria-label="GenQR - accueil">
-            <span>Gen</span>QR
+          <Link className="brand brand-small" href="/" aria-label="MonCode - accueil">
+            <span>Mon</span>Code
           </Link>
           <p className="header-note">Vos menus digitaux, en un scan.</p>
         </header>
@@ -52,7 +52,7 @@ export default function HomePage() {
       <section className="hero" id="accueil">
         {!hasSeenIntro && (
           <div className="welcome-message" aria-live="polite">
-            <h1>Welcome to <span>Gen</span>QR</h1>
+            <h1>Welcome to <span>Mon</span>Code</h1>
           </div>
         )}
 
@@ -60,7 +60,7 @@ export default function HomePage() {
           <div className="action-panel" style={{ maxWidth: "660px", width: "100%" }}>
             <p className="eyebrow">Menus Digitaux & QR Codes Professionnels</p>
             <h1 className="brand brand-hero" style={{ margin: "0 0 16px" }}>
-              <span>Gen</span>QR
+              <span>Mon</span>Code
             </h1>
             <p className="hero-description" style={{ margin: "0 auto 30px" }}>
               Partagez vos menus de restaurants et cartes professionnelles en un scan.
@@ -150,7 +150,7 @@ export default function HomePage() {
 
       {!isWelcome && (
         <footer className="site-footer">
-          <p>Scannez et partagez en un instant • Propulsé par GenQR</p>
+          <p>Scannez et partagez en un instant • Propulsé par MonCode</p>
         </footer>
       )}
     </main>

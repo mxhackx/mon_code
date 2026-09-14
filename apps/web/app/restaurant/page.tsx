@@ -48,13 +48,29 @@ export default function RestaurantPage() {
       return;
     }
 
-    if (!restaurantInfo.phoneNumber.trim()) {
+    const trimmedPhone = restaurantInfo.phoneNumber.trim();
+    if (!trimmedPhone) {
       setFormError("Veuillez renseigner le numéro WhatsApp du restaurant.");
       return;
     }
 
-    if (!restaurantInfo.locationUrl.trim()) {
+    // Validation du format international (doit commencer par + ou avoir l'indicatif)
+    const digitsOnly = trimmedPhone.replace(/[^0-9]/g, "");
+    if (!trimmedPhone.startsWith("+") && !trimmedPhone.startsWith("00") && digitsOnly.length < 10) {
+      setFormError(
+        "Veuillez indiquer l'indicatif pays pour le numéro WhatsApp (ex: +229 01 57 48 20 21 ou +33 6 12 34 56 78).",
+      );
+      return;
+    }
+
+    const trimmedLocation = restaurantInfo.locationUrl.trim();
+    if (!trimmedLocation) {
       setFormError("Veuillez renseigner le lien de localisation Google Maps.");
+      return;
+    }
+
+    if (!trimmedLocation.startsWith("http://") && !trimmedLocation.startsWith("https://")) {
+      setFormError("Le lien de localisation doit être une URL valide (ex: https://maps.app.goo.gl/...).");
       return;
     }
 
@@ -73,8 +89,8 @@ export default function RestaurantPage() {
       <div className="ambient ambient-two" />
 
       <header className="site-header">
-        <Link className="brand brand-small" href="/" aria-label="GenQR - accueil">
-          <span>Gen</span>QR
+        <Link className="brand brand-small" href="/" aria-label="MonCode - accueil">
+          <span>Mon</span>Code
         </Link>
         <p className="header-note">Vos menus digitaux, en un scan.</p>
       </header>
@@ -124,19 +140,19 @@ export default function RestaurantPage() {
             <div className="form-row">
               <div className="admin-input-group">
                 <label className="admin-label" htmlFor="resto-phone">
-                  Numéro WhatsApp / Téléphone *
+                  Numéro WhatsApp (avec indicatif pays) *
                 </label>
                 <input
                   id="resto-phone"
                   type="tel"
                   className="admin-input"
-                  placeholder="Ex: +33612345678 ou 0612345678"
+                  placeholder="Ex: +229 01 57 48 20 21 ou +33 6 12 34 56 78"
                   value={restaurantInfo.phoneNumber}
                   onChange={(e) => handleTextChange("phoneNumber", e.target.value)}
                   required
                 />
                 <small style={{ color: "#8a7a70", fontSize: "11px", marginTop: "2px" }}>
-                  Utilisé pour le bouton de discussion WhatsApp directe.
+                  Obligatoire avec indicatif (+229, +33...) pour ouvrir la discussion WhatsApp directe.
                 </small>
               </div>
 
@@ -329,7 +345,7 @@ export default function RestaurantPage() {
       </section>
 
       <footer className="site-footer">
-        <p>Scannez et partagez en un instant • Propulsé par GenQR</p>
+        <p>Scannez et partagez en un instant • Propulsé par MonCode</p>
       </footer>
     </main>
   );

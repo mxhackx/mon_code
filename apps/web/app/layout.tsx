@@ -3,8 +3,8 @@ import "./globals.css";
 import { FileProvider } from "./context/FileContext";
 
 export const metadata: Metadata = {
-  title: "GenQR — Vos menus digitaux en un scan",
-  description: "Créez et partagez votre menu digital avec GenQR.",
+  title: "MonCode — Vos menus digitaux en un scan",
+  description: "Créez et partagez votre menu digital avec MonCode.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

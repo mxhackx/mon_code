@@ -14,6 +14,7 @@ export default function AdminDashboard({ adminToken, onLogout, onNavigateToUser 
   const [adminTab, setAdminTab] = useState<"cards" | "settings">("cards");
   const [cardsList, setCardsList] = useState<CardSummary[]>([]);
   const [isLoadingCards, setIsLoadingCards] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let isSubscribed = true;
@@ -24,23 +25,39 @@ export default function AdminDashboard({ adminToken, onLogout, onNavigateToUser 
         Authorization: `Bearer ${adminToken}`,
       },
     })
-      .then((res) => (res.ok ? res.json() : []))
+      .then(async (res) => {
+        if (res.status === 401) {
+          throw new Error("SESSION_EXPIRED");
+        }
+        if (!res.ok) {
+          throw new Error("FETCH_FAILED");
+        }
+        return res.json();
+      })
       .then((data: CardSummary[]) => {
         if (isSubscribed) {
           setCardsList(data);
           setIsLoadingCards(false);
+          setErrorMessage(null);
         }
       })
-      .catch(() => {
+      .catch((err: unknown) => {
         if (isSubscribed) {
           setIsLoadingCards(false);
+          const message = err instanceof Error ? err.message : "";
+          if (message === "SESSION_EXPIRED") {
+            setErrorMessage("Votre session a expiré. Déconnexion automatique...");
+            setTimeout(() => onLogout(), 2000);
+          } else {
+            setErrorMessage("Impossible de joindre le serveur pour récupérer les cartes.");
+          }
         }
       });
 
     return () => {
       isSubscribed = false;
     };
-  }, [adminToken]);
+  }, [adminToken, onLogout]);
 
   return (
     <div>
@@ -70,6 +87,24 @@ export default function AdminDashboard({ adminToken, onLogout, onNavigateToUser 
       <h1 className="brand" style={{ fontSize: "clamp(30px, 4vw, 44px)", margin: "0 0 10px", textAlign: "left" }}>
         Tableau de bord <span>Admin</span>
       </h1>
+
+      {errorMessage && (
+        <div
+          style={{
+            background: "#fef3f2",
+            border: "1px solid #fecdca",
+            color: "#b42318",
+            padding: "12px 16px",
+            borderRadius: "12px",
+            fontSize: "13.5px",
+            fontWeight: 600,
+            marginBottom: "16px",
+            textAlign: "left",
+          }}
+        >
+          ⚠️ {errorMessage}
+        </div>
+      )}
 
       {/* Onglets Admin */}
       <div className="admin-tabs">

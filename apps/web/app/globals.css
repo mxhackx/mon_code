@@ -92,7 +92,7 @@ button, a { font: inherit; }
 .admin-form { display: flex; flex-direction: column; gap: 16px; max-width: 440px; margin: 0 auto; text-align: left; }
 .admin-input-group { display: flex; flex-direction: column; gap: 6px; }
 .admin-label { font-size: 13px; font-weight: 600; color: #423832; }
-.admin-input { width: 100%; padding: 12px 16px; border-radius: 12px; border: 1.5px solid rgba(0, 0, 0, 0.12); font-size: 14px; background: #ffffff; transition: border-color 0.2s ease, box-shadow 0.2s ease; }
+.admin-input { width: 100%; padding: 12px 16px; border-radius: 12px; border: 1.5px solid rgba(0, 0, 0, 0.12); font-size: 16px; background: #ffffff; transition: border-color 0.2s ease, box-shadow 0.2s ease; }
 .admin-input:focus { outline: none; border-color: var(--orange); box-shadow: 0 0 0 3px rgba(239, 106, 34, 0.15); }
 
 /* User Intervention Form Styles */
@@ -590,6 +590,4 @@ button, a { font: inherit; }
     right: 8px;
   }
 }
-
-
 

@@ -152,8 +152,16 @@ export default function CardViewPage() {
     return null;
   })();
 
-  // URL WhatsApp personnalisée
-  const cleanPhone = card?.phoneNumber ? card.phoneNumber.replace(/[^0-9]/g, "") : null;
+  // URL WhatsApp personnalisée (avec normalisation pour wa.me)
+  const cleanPhone = (() => {
+    if (!card?.phoneNumber) return null;
+    let digits = card.phoneNumber.replace(/[^0-9]/g, "");
+    if (digits.startsWith("00")) {
+      digits = digits.substring(2);
+    }
+    return digits.length >= 8 ? digits : null;
+  })();
+
   const whatsappUrl = cleanPhone
     ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
         `Bonjour ${card?.restaurantName || ""}, je vous contacte suite à la consultation de votre menu en ligne.`
@@ -167,8 +175,8 @@ export default function CardViewPage() {
         <div className="ambient ambient-one" />
         <div className="ambient ambient-two" />
         <header className="site-header">
-          <Link className="brand brand-small" href="/" aria-label="GenQR - accueil">
-            <span>Gen</span>QR
+          <Link className="brand brand-small" href="/" aria-label="MonCode - accueil">
+            <span>Mon</span>Code
           </Link>
           <p className="header-note">Vos menus digitaux, en un scan.</p>
         </header>
@@ -205,8 +213,8 @@ export default function CardViewPage() {
         <div className="ambient ambient-one" />
         <div className="ambient ambient-two" />
         <header className="site-header">
-          <Link className="brand brand-small" href="/choix-profil" aria-label="GenQR - accueil">
-            <span>Gen</span>QR
+          <Link className="brand brand-small" href="/choix-profil" aria-label="MonCode - accueil">
+            <span>Mon</span>Code
           </Link>
           <p className="header-note">Vos menus digitaux, en un scan.</p>
         </header>
@@ -222,7 +230,7 @@ export default function CardViewPage() {
             </p>
             <div className="action-buttons">
               <Link href="/" className="cta-button">
-                Créer un menu avec GenQR
+                Créer un menu avec MonCode
               </Link>
             </div>
           </div>
@@ -468,7 +476,7 @@ export default function CardViewPage() {
           }}
         >
           <p style={{ margin: 0 }}>
-            Propulsé par <Link href="/" style={{ color: "var(--theme-accent)", fontWeight: 700, textDecoration: "none" }}>GenQR</Link>
+            Propulsé par <Link href="/" style={{ color: "var(--theme-accent)", fontWeight: 700, textDecoration: "none" }}>MonCode</Link>
           </p>
         </footer>
       </div>

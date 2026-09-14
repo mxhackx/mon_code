@@ -50,7 +50,7 @@ export default function AdminLogin({ onLoginSuccess, onBack }: AdminLoginProps) 
         className="change-role-btn"
         onClick={onBack}
       >
-        ← Changer de profil (Admin / User)
+        ← Retour
       </button>
 
       <div style={{ maxWidth: "440px", margin: "0 auto" }}>

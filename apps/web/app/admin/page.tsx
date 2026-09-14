@@ -12,7 +12,11 @@ export default function AdminPage() {
   const [adminToken, setAdminToken] = useState<string | null>(() => {
     if (typeof window !== "undefined") {
       try {
-        return sessionStorage.getItem("genqr_admin_token") || sessionStorage.getItem("visitcard_admin_token");
+        return (
+          sessionStorage.getItem("moncode_admin_token") ||
+          sessionStorage.getItem("genqr_admin_token") ||
+          sessionStorage.getItem("visitcard_admin_token")
+        );
       } catch {
         // ignore
       }
@@ -23,6 +27,7 @@ export default function AdminPage() {
   const handleLoginSuccess = (token: string) => {
     setAdminToken(token);
     try {
+      sessionStorage.setItem("moncode_admin_token", token);
       sessionStorage.setItem("genqr_admin_token", token);
     } catch {
       // ignore
@@ -32,6 +37,7 @@ export default function AdminPage() {
   const handleLogout = () => {
     setAdminToken(null);
     try {
+      sessionStorage.removeItem("moncode_admin_token");
       sessionStorage.removeItem("genqr_admin_token");
       sessionStorage.removeItem("visitcard_admin_token");
     } catch {
@@ -45,8 +51,8 @@ export default function AdminPage() {
       <div className="ambient ambient-two" />
 
       <header className="site-header">
-        <Link className="brand brand-small" href="/" aria-label="GenQR - accueil">
-          <span>Gen</span>QR
+        <Link className="brand brand-small" href="/" aria-label="MonCode - accueil">
+          <span>Mon</span>Code
         </Link>
         <p className="header-note">Espace d&apos;administration sécurisé.</p>
       </header>
@@ -77,7 +83,7 @@ export default function AdminPage() {
       </section>
 
       <footer className="site-footer">
-        <p>Administration GenQR • Vos données sont sécurisées</p>
+        <p>Administration MonCode • Vos données sont sécurisées</p>
       </footer>
     </main>
   );

@@ -42,16 +42,17 @@ export class CardsController {
       [
         { name: 'file', maxCount: 1 },
         { name: 'logo', maxCount: 1 },
-        { name: 'menu', maxCount: 10 },
+        { name: 'menu', maxCount: 8 },
       ],
       {
         limits: {
-          fileSize: 10 * 1024 * 1024, // Limite de 10 Mo par fichier
+          fileSize: 6 * 1024 * 1024, // Limite de 6 Mo par fichier (évite les saturations RAM)
+          files: 10,
         },
         fileFilter: (_req, file, callback) => {
           if (!file.mimetype || !file.mimetype.startsWith('image/')) {
             return callback(
-              new BadRequestException(`Le fichier "${file.originalname}" n'est pas une image valide (mimetype: ${file.mimetype})`),
+              new BadRequestException(`Le fichier "${file.originalname}" n'est pas une image valide (format attendu: PNG, JPG, WEBP)`),
               false,
             );
           }

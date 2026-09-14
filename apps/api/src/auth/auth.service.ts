@@ -39,7 +39,7 @@ export class AuthService implements OnModuleInit {
   private async ensureAdminUserExists() {
     if (!this.supabase) return;
 
-    const adminEmail = process.env.ADMIN_EMAIL || 'admin@genqr.com';
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@moncode.com';
     const adminPassword = process.env.ADMIN_PASSWORD || 'MateoGRANDGenQR';
 
     try {
@@ -52,17 +52,29 @@ export class AuthService implements OnModuleInit {
       const existing = data.users.find((u) => u.email === adminEmail);
 
       if (!existing) {
-        const { error: createError } = await this.supabase.auth.admin.createUser({
-          email: adminEmail,
-          password: adminPassword,
-          email_confirm: true,
-          user_metadata: { role: 'admin' },
-        });
+        const previousAdmin = data.users.find(
+          (u) => u.user_metadata?.role === 'admin' || u.email === 'admin@genqr.com',
+        );
 
-        if (createError) {
-          this.logger.error(`Erreur création compte admin: ${createError.message}`);
+        if (previousAdmin) {
+          await this.supabase.auth.admin.updateUserById(previousAdmin.id, {
+            email: adminEmail,
+            email_confirm: true,
+          });
+          this.logger.log(`Compte administrateur Supabase mis à jour (${previousAdmin.email} -> ${adminEmail})`);
         } else {
-          this.logger.log(`Compte administrateur Supabase créé avec succès (${adminEmail})`);
+          const { error: createError } = await this.supabase.auth.admin.createUser({
+            email: adminEmail,
+            password: adminPassword,
+            email_confirm: true,
+            user_metadata: { role: 'admin' },
+          });
+
+          if (createError) {
+            this.logger.error(`Erreur création compte admin: ${createError.message}`);
+          } else {
+            this.logger.log(`Compte administrateur Supabase créé avec succès (${adminEmail})`);
+          }
         }
       } else {
         this.logger.log(`Compte administrateur Supabase opérationnel (${adminEmail})`);
@@ -84,7 +96,7 @@ export class AuthService implements OnModuleInit {
       throw new BadRequestException('Supabase n’est pas configuré sur le serveur');
     }
 
-    const adminEmail = process.env.ADMIN_EMAIL || 'admin@genqr.com';
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@moncode.com';
 
     const { data, error } = await this.supabase.auth.signInWithPassword({
       email: adminEmail,
