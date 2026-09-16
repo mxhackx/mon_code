@@ -1,12 +1,20 @@
 "use client";
 
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useFile } from "../context/FileContext";
 
 export default function ChoixProfilPage() {
   const router = useRouter();
-  const { setSelectedRole } = useFile();
+  const { setSelectedRole, authToken, isAuthLoading } = useFile();
+
+  // Protection : rediriger les visiteurs non connectés vers /connexion
+  useEffect(() => {
+    if (!isAuthLoading && !authToken) {
+      router.push("/connexion");
+    }
+  }, [authToken, isAuthLoading, router]);
 
   const handleSelectUser = () => {
     setSelectedRole("user");

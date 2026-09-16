@@ -54,7 +54,8 @@ export default function CarteVisitePage() {
       formData.append("themeId", "direct");
 
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5500";
-      const response = await fetch(`${apiUrl}/cards`, {
+      const response = await fetch(`${apiUrl}/cards/visite`, {
+      credentials: 'include',
         method: "POST",
         body: formData,
       });

@@ -3,6 +3,12 @@
 import { createContext, useContext, useState, ReactNode } from "react";
 
 export type UserRole = "user" | "admin" | null;
+export type AuthRole = "admin" | "user" | null;
+
+export interface AuthUser {
+  id?: string;
+  email?: string;
+}
 
 export interface UserInfo {
   userName: string;
@@ -71,6 +77,21 @@ interface FileContextType {
   setThemeId: (themeId: string) => void;
   setQrStyle: (qrStyle: string) => void;
   resetAll: () => void;
+
+  // Authentification unifiée et gestion des tokens
+  authToken: string | null;
+  refreshToken: string | null;
+  authRole: AuthRole;
+  authUser: AuthUser | null;
+  isAuthLoading: boolean;
+  loginSession: (
+    token: string,
+    role: "admin" | "user",
+    user?: AuthUser,
+    refreshToken?: string,
+  ) => void;
+  logoutSession: () => void;
+  refreshAccessToken: () => Promise<string | null>;
 }
 
 const FileContext = createContext<FileContextType | undefined>(undefined);
@@ -83,6 +104,179 @@ export function FileProvider({ children }: { children: ReactNode }) {
   const [userInfo, setUserInfo] = useState<UserInfo>(initialUserInfo);
   const [restaurantInfo, setRestaurantInfo] = useState<RestaurantInfo>(initialRestaurantInfo);
   const [customization, setCustomization] = useState<CustomizationInfo>(initialCustomization);
+
+  // Authentification initialisée depuis sessionStorage
+  const [authToken, setAuthToken] = useState<string | null>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        return (
+          sessionStorage.getItem("moncode_token") ||
+          sessionStorage.getItem("moncode_admin_token")
+        );
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
+
+  const [authRole, setAuthRole] = useState<AuthRole>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const storedRole = sessionStorage.getItem("moncode_role") as AuthRole;
+        const storedToken =
+          sessionStorage.getItem("moncode_token") ||
+          sessionStorage.getItem("moncode_admin_token");
+        return storedRole || (storedToken ? "admin" : null);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
+
+  const [authUser, setAuthUser] = useState<AuthUser | null>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const storedEmail = sessionStorage.getItem("moncode_user_email");
+        return storedEmail ? { email: storedEmail } : null;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
+
+  const [refreshToken, setRefreshToken] = useState<string | null>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        return sessionStorage.getItem("moncode_refresh_token");
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
+
+  const [isAuthLoading] = useState<boolean>(false);
+
+  const loginSession = (
+    token: string,
+    role: "admin" | "user",
+    user?: AuthUser,
+    newRefreshToken?: string,
+  ) => {
+    setAuthToken(token);
+    setAuthRole(role);
+    setSelectedRole(role);
+    if (user) {
+      setAuthUser(user);
+    }
+    if (newRefreshToken) {
+      setRefreshToken(newRefreshToken);
+    }
+
+    try {
+      sessionStorage.setItem("moncode_token", token);
+      sessionStorage.setItem("moncode_role", role);
+      if (role === "admin") {
+        sessionStorage.setItem("moncode_admin_token", token);
+      }
+      if (user?.email) {
+        sessionStorage.setItem("moncode_user_email", user.email);
+      }
+      if (newRefreshToken) {
+        sessionStorage.setItem("moncode_refresh_token", newRefreshToken);
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  const logoutSession = () => {
+    setAuthToken(null);
+    setRefreshToken(null);
+    setAuthRole(null);
+    setSelectedRole(null);
+    setAuthUser(null);
+
+    try {
+      sessionStorage.removeItem("moncode_token");
+      sessionStorage.removeItem("moncode_refresh_token");
+      sessionStorage.removeItem("moncode_role");
+      sessionStorage.removeItem("moncode_admin_token");
+      sessionStorage.removeItem("moncode_user_email");
+      sessionStorage.removeItem("genqr_admin_token");
+      sessionStorage.removeItem("visitcard_admin_token");
+    } catch {
+      // ignore
+    }
+  };
+
+  const refreshAccessToken = async (): Promise<string | null> => {
+    const currentRefreshToken =
+      refreshToken ||
+      (typeof window !== "undefined"
+        ? sessionStorage.getItem("moncode_refresh_token")
+        : null);
+
+    if (!currentRefreshToken) {
+      logoutSession();
+      return null;
+    }
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5500";
+      const res = await fetch(`${apiUrl}/auth/refresh`, {
+      credentials: 'include',
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh_token: currentRefreshToken }),
+      });
+
+      if (!res.ok) {
+        logoutSession();
+        return null;
+      }
+
+      const data = await res.json();
+      const newAccessToken: string = data.access_token;
+      const nextRefreshToken: string | undefined = data.refresh_token;
+
+      if (newAccessToken) {
+        setAuthToken(newAccessToken);
+        try {
+          sessionStorage.setItem("moncode_token", newAccessToken);
+          if (authRole === "admin") {
+            sessionStorage.setItem("moncode_admin_token", newAccessToken);
+          }
+        } catch {
+          // ignore
+        }
+      }
+
+      if (nextRefreshToken) {
+        setRefreshToken(nextRefreshToken);
+        try {
+          sessionStorage.setItem("moncode_refresh_token", nextRefreshToken);
+        } catch {
+          // ignore
+        }
+      }
+
+      if (data.user) {
+        setAuthUser(data.user);
+        if (data.user.role) {
+          setAuthRole(data.user.role);
+        }
+      }
+
+      return newAccessToken;
+    } catch {
+      logoutSession();
+      return null;
+    }
+  };
 
   const setFile = (newFile: File | null) => {
     setFileState(newFile);
@@ -178,6 +372,14 @@ export function FileProvider({ children }: { children: ReactNode }) {
         setThemeId,
         setQrStyle,
         resetAll,
+        authToken,
+        refreshToken,
+        authRole,
+        authUser,
+        isAuthLoading,
+        loginSession,
+        logoutSession,
+        refreshAccessToken,
       }}
     >
       {children}

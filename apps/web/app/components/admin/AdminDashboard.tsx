@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import AdminCardsList, { CardSummary } from "./AdminCardsList";
 import AdminSettingsForm from "./AdminSettingsForm";
+import { useFile } from "../../context/FileContext";
 
 interface AdminDashboardProps {
   adminToken: string;
@@ -11,6 +12,7 @@ interface AdminDashboardProps {
 }
 
 export default function AdminDashboard({ adminToken, onLogout, onNavigateToUser }: AdminDashboardProps) {
+  const { refreshAccessToken } = useFile();
   const [adminTab, setAdminTab] = useState<"cards" | "settings">("cards");
   const [cardsList, setCardsList] = useState<CardSummary[]>([]);
   const [isLoadingCards, setIsLoadingCards] = useState(true);
@@ -20,28 +22,44 @@ export default function AdminDashboard({ adminToken, onLogout, onNavigateToUser 
     let isSubscribed = true;
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5500";
 
-    fetch(`${apiUrl}/cards`, {
-      headers: {
-        Authorization: `Bearer ${adminToken}`,
-      },
-    })
-      .then(async (res) => {
+    const fetchCards = async () => {
+      try {
+        let token = adminToken;
+        let res = await fetch(`${apiUrl}/cards`, {
+      credentials: 'include',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        // Si le token a expiré, tentative de rafraîchissement automatique
+        if (res.status === 401) {
+          const newToken = await refreshAccessToken();
+          if (newToken) {
+            token = newToken;
+            res = await fetch(`${apiUrl}/cards`, {
+      credentials: 'include',
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            });
+          }
+        }
+
         if (res.status === 401) {
           throw new Error("SESSION_EXPIRED");
         }
         if (!res.ok) {
           throw new Error("FETCH_FAILED");
         }
-        return res.json();
-      })
-      .then((data: CardSummary[]) => {
+
+        const data: CardSummary[] = await res.json();
         if (isSubscribed) {
           setCardsList(data);
           setIsLoadingCards(false);
           setErrorMessage(null);
         }
-      })
-      .catch((err: unknown) => {
+      } catch (err: unknown) {
         if (isSubscribed) {
           setIsLoadingCards(false);
           const message = err instanceof Error ? err.message : "";
@@ -52,12 +70,15 @@ export default function AdminDashboard({ adminToken, onLogout, onNavigateToUser 
             setErrorMessage("Impossible de joindre le serveur pour récupérer les cartes.");
           }
         }
-      });
+      }
+    };
+
+    fetchCards();
 
     return () => {
       isSubscribed = false;
     };
-  }, [adminToken, onLogout]);
+  }, [adminToken, onLogout, refreshAccessToken]);
 
   return (
     <div>
@@ -137,4 +158,3 @@ export default function AdminDashboard({ adminToken, onLogout, onNavigateToUser 
     </div>
   );
 }
-

@@ -44,6 +44,7 @@ export default function AdminSettingsForm({ adminToken }: AdminSettingsFormProps
       }
 
       const res = await fetch(`${apiUrl}/auth/admin/credentials`, {
+      credentials: 'include',
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

@@ -5,7 +5,6 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 
 interface CardData {
-  id: string;
   slug: string;
   imageUrl: string;
   cardUrl: string;

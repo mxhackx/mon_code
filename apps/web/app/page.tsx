@@ -45,7 +45,25 @@ export default function HomePage() {
           <Link className="brand brand-small" href="/" aria-label="MonCode - accueil">
             <span>Mon</span>Code
           </Link>
-          <p className="header-note">Vos menus digitaux, en un scan.</p>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <Link
+              href="/connexion"
+              className="change-role-btn"
+              style={{
+                margin: 0,
+                textDecoration: "none",
+                fontSize: "12.5px",
+                fontWeight: 600,
+                padding: "6px 14px",
+                borderRadius: "999px",
+                background: "rgba(255, 255, 255, 0.9)",
+                borderColor: "rgba(24, 20, 17, 0.15)",
+                color: "var(--ink)",
+              }}
+            >
+              Espace Pro (Connexion) ↗
+            </Link>
+          </div>
         </header>
       )}
 
@@ -58,42 +76,38 @@ export default function HomePage() {
 
         {!isWelcome && (
           <div className="action-panel" style={{ maxWidth: "660px", width: "100%" }}>
-            <p className="eyebrow">Menus Digitaux & QR Codes Professionnels</p>
+            <p className="eyebrow">Générateur de QR Code & Carte Professionnelle</p>
             <h1 className="brand brand-hero" style={{ margin: "0 0 16px" }}>
               <span>Mon</span>Code
             </h1>
             <p className="hero-description" style={{ margin: "0 auto 30px" }}>
-              Partagez vos menus de restaurants et cartes professionnelles en un scan.
-              Personnalisez votre thème visuel, téléchargez votre QR code officiel et recevez vos commandes directement sur WhatsApp.
+              Générez votre code QR officiel et votre carte professionnelle en un instant.
+              Téléchargez immédiatement votre image optimisée prête pour l&apos;impression et le partage.
             </p>
 
             <div className="action-buttons" style={{ marginBottom: "28px", display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
-              <Link href="/choix-profil" className="cta-button" style={{ padding: "0 28px", fontSize: "15px" }}>
-                <span>Menu Restaurant Digital →</span>
-              </Link>
-
               <Link
                 href="/carte-visite"
                 className="cta-button"
                 style={{
-                  background: "rgba(255, 255, 255, 0.8)",
-                  color: "var(--ink)",
-                  borderColor: "rgba(24, 20, 17, 0.2)",
-                  padding: "0 24px",
+                  padding: "0 32px",
                   fontSize: "15px",
-                  boxShadow: "0 6px 20px rgba(0,0,0,0.06)",
+                  height: "48px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "10px",
                 }}
               >
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
                   <rect x="3" y="4" width="18" height="16" rx="2" />
                   <line x1="7" y1="8" x2="17" y2="8" />
                   <line x1="7" y1="12" x2="13" y2="12" />
                 </svg>
-                <span>Carte de Visite Directe</span>
+                <span>Générer mon Code QR ↗</span>
               </Link>
             </div>
 
-            {/* Atouts clés */}
+            {/* Atouts clés pour les visiteurs */}
             <div
               style={{
                 display: "flex",
@@ -115,7 +129,7 @@ export default function HomePage() {
                   gap: "6px",
                 }}
               >
-                🍽️ Menus restaurants (5 thèmes)
+                ⚡ Génération instantanée
               </span>
               <span
                 style={{
@@ -128,7 +142,7 @@ export default function HomePage() {
                   gap: "6px",
                 }}
               >
-                ⚡ Téléchargement carte immédiat
+                📱 Scan & Partage haute définition
               </span>
               <span
                 style={{
@@ -141,7 +155,7 @@ export default function HomePage() {
                   gap: "6px",
                 }}
               >
-                💬 Contact WhatsApp direct
+                🔒 Téléchargement sécurisé
               </span>
             </div>
           </div>

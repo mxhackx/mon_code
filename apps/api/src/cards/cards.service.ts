@@ -75,7 +75,7 @@ export class CardsService {
 
       if (uploadError) {
         this.logger.error(`Erreur upload Supabase: ${uploadError.message}`);
-        throw new BadRequestException(`Échec du stockage sur Supabase: ${uploadError.message}`);
+        throw new BadRequestException('Échec du stockage de l’image. Veuillez réessayer ultérieurement.');
       }
 
       const { data } = this.supabase.storage.from(this.bucketName).getPublicUrl(fileName);
@@ -216,7 +216,6 @@ export class CardsService {
     });
 
     return {
-      id: card.id.toString(),
       slug: card.slug,
       imageUrl: card.imageUrl,
       restaurantName: card.restaurantName ?? null,
@@ -226,10 +225,6 @@ export class CardsService {
       menuImages: menuImagesUrls,
       themeId: card.themeId ?? 'theme-1',
       qrStyle: card.qrStyle ?? 'style-1',
-      userName: card.userName ?? null,
-      clientName: card.clientName ?? null,
-      workDone: card.workDone ?? null,
-      amountReceived: card.amountReceived ?? null,
       cardUrl,
       qrCode,
       createdAt: card.createdAt,
@@ -258,7 +253,6 @@ export class CardsService {
 
     // Endpoint public : exclusion stricte des données d'intervention internes (userName, clientName, workDone, amountReceived)
     return {
-      id: card.id.toString(),
       slug: card.slug,
       imageUrl: card.imageUrl,
       restaurantName: card.restaurantName ?? null,
@@ -268,10 +262,6 @@ export class CardsService {
       menuImages,
       themeId: card.themeId ?? 'theme-1',
       qrStyle: card.qrStyle ?? 'style-1',
-      userName: card.userName ?? null,
-      clientName: card.clientName ?? null,
-      workDone: card.workDone ?? null,
-      amountReceived: card.amountReceived ?? null,
       cardUrl: `${appUrl}/c/${card.slug}`,
       createdAt: card.createdAt,
     };

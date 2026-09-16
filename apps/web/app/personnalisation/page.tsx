@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useFile } from "../context/FileContext";
@@ -59,33 +59,33 @@ const THEMES = [
     subtitle: "Energetic Orange",
     desc: "Teintes festives orange et ambre sur fond sombre. Dynamique et percutant.",
     bgPreview: "#161311",
-    accentColor: "#ef6a22",
-    textColor: "#fff4ec",
-    badge: "Street Food",
+    accentColor: "#f97316",
+    textColor: "#fff7ed",
+    badge: "Festif",
   },
 ];
 
 const QR_STYLES = [
   {
     id: "style-1",
-    name: "Classique Pur",
-    desc: "Noir & Blanc intemporel et universel",
-    previewColor: "#181411",
+    name: "Classique Épuré",
+    desc: "Noir profond sur fond blanc immaculé",
+    previewColor: "#0f172a",
     bgColor: "#ffffff",
   },
   {
     id: "style-2",
-    name: "Signature MonCode",
-    desc: "Orange brand dynamique et moderne",
-    previewColor: "#ef6a22",
-    bgColor: "#ffffff",
+    name: "Chaleur Terracotta",
+    desc: "Orange terracotta chaleureux et moderne",
+    previewColor: "#c85a32",
+    bgColor: "#fdf9f4",
   },
   {
     id: "style-3",
-    name: "Carte Sombre & Or",
-    desc: "Code or noble sur fond noir profond",
+    name: "Prestige Doré",
+    desc: "Or chaud subtil sur fond sombre luxueux",
     previewColor: "#d4af37",
-    bgColor: "#0f0d0c",
+    bgColor: "#1a1612",
   },
   {
     id: "style-4",
@@ -111,7 +111,16 @@ export default function PersonnalisationPage() {
     customization,
     setThemeId,
     setQrStyle,
+    authToken,
+    isAuthLoading,
   } = useFile();
+
+  // Protection de la route : rediriger vers la connexion si non connecté
+  useEffect(() => {
+    if (!isAuthLoading && !authToken) {
+      router.push("/connexion");
+    }
+  }, [authToken, isAuthLoading, router]);
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -123,7 +132,7 @@ export default function PersonnalisationPage() {
     setError(null);
 
     try {
-      const formData = new FormData();
+      const formData = new FormData(); 
 
       // Informations de l'intervention
       if (userInfo.userName) formData.append("userName", userInfo.userName);
@@ -149,8 +158,15 @@ export default function PersonnalisationPage() {
       }
 
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5500";
+      const headers: Record<string, string> = {};
+      if (authToken) {
+        headers["Authorization"] = `Bearer ${authToken}`;
+      }
+
       const response = await fetch(`${apiUrl}/cards`, {
+      credentials: 'include',
         method: "POST",
+        headers,
         body: formData,
       });
 

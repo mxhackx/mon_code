@@ -1,14 +1,21 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, useEffect, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useFile, UserInfo } from "../context/FileContext";
 
 export default function IntervenantPage() {
   const router = useRouter();
-  const { userInfo, setUserInfo } = useFile();
+  const { userInfo, setUserInfo, authToken, isAuthLoading, logoutSession } = useFile();
   const [formError, setFormError] = useState<string | null>(null);
+
+  // Protection de la route : rediriger vers la connexion si non authentifié
+  useEffect(() => {
+    if (!isAuthLoading && !authToken) {
+      router.push("/connexion");
+    }
+  }, [authToken, isAuthLoading, router]);
 
   const handleUserInfoChange = (field: keyof UserInfo, value: string) => {
     setUserInfo((prev) => ({ ...prev, [field]: value }));
@@ -34,6 +41,21 @@ export default function IntervenantPage() {
     router.push("/restaurant");
   };
 
+  const handleLogout = () => {
+    logoutSession();
+    router.push("/connexion");
+  };
+
+  if (isAuthLoading || !authToken) {
+    return (
+      <main className="landing-page scene-ready">
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}>
+          <p style={{ color: "#8a7e78" }}>Vérification de l&apos;authentification...</p>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="landing-page scene-ready">
       <div className="ambient ambient-one" />
@@ -43,19 +65,29 @@ export default function IntervenantPage() {
         <Link className="brand brand-small" href="/" aria-label="MonCode - accueil">
           <span>Mon</span>Code
         </Link>
-        <p className="header-note">Vos menus digitaux, en un scan.</p>
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="change-role-btn"
+          style={{
+            margin: 0,
+            cursor: "pointer",
+            fontSize: "12px",
+            padding: "5px 12px",
+            background: "rgba(255, 255, 255, 0.8)",
+            border: "1px solid rgba(24, 20, 17, 0.15)",
+          }}
+        >
+          Se déconnecter
+        </button>
       </header>
 
       <section className="hero">
         <div className="action-panel" style={{ opacity: 1, transform: "none", maxWidth: "640px", width: "100%" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-            <Link
-              href="/choix-profil"
-              className="change-role-btn"
-              style={{ margin: 0, textDecoration: "none" }}
-            >
-              ← Retour au choix du profil
-            </Link>
+            <span style={{ fontSize: "12.5px", color: "#625852", fontWeight: 600 }}>
+              Processus de création Restaurant
+            </span>
             <span style={{ fontSize: "12px", color: "var(--orange-dark)", fontWeight: 700, background: "rgba(239, 106, 34, 0.1)", padding: "4px 10px", borderRadius: "999px" }}>
               Étape 1 / 3
             </span>
@@ -155,4 +187,3 @@ export default function IntervenantPage() {
     </main>
   );
 }
-
