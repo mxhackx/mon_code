@@ -336,7 +336,6 @@ export default function CardViewPage() {
           )}
 
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
-            <span className="resto-theme-badge">{themeLabel}</span>
             <h1 className="resto-name">{card.restaurantName || "Notre Menu"}</h1>
           </div>
         </header>
