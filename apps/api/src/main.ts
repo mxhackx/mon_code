@@ -8,10 +8,9 @@ import * as path from 'path';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  // Activer CORS sécurisé pour permettre les requêtes depuis apps/web
   const allowedOrigins = [
-    process.env.APP_URL,
-    'http://localhost:3000',
+    process.env.APP_URL,       // Doit valoir "https://moncode.bj" sur Render
+    'http://localhost:3000', 
     'http://127.0.0.1:3000',
   ].filter(Boolean) as string[];
 
@@ -20,14 +19,12 @@ async function bootstrap() {
       if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
         callback(null, true);
       } else {
-        callback(null, false);
+        callback(new Error('Bloqué par la politique CORS (Origine non autorisée)'));
       }
     },
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });
-
-  // Servir les images enregistrées dans le dossier uploads
   const uploadsDir = path.join(process.cwd(), 'uploads');
   app.use('/uploads', express.static(uploadsDir));
 
