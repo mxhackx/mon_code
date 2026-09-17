@@ -15,6 +15,7 @@ interface QrResult {
 const THEMES = [
   {
     id: "theme-1",
+    name: "premier",
     subtitle: "Dark Luxury",
     desc: "Noir profond et touches or champagne. Ambiance feutrée et gastronomique.",
     bgPreview: "#0d0b09",
@@ -24,6 +25,7 @@ const THEMES = [
   },
   {
     id: "theme-2",
+    name: "deuxième",
     subtitle: "Terracotta & Bois",
     desc: "Tons chauds terre cuite, crème et bois. Ambiance bistrot convivial.",
     bgPreview: "#fcf8f2",
@@ -33,6 +35,7 @@ const THEMES = [
   },
   {
     id: "theme-3",
+    name: "troisième",
     subtitle: "Clean Slate",
     desc: "Fond blanc pur, contrastes ardoise et clarté absolue pour les plats.",
     bgPreview: "#ffffff",
@@ -42,6 +45,7 @@ const THEMES = [
   },
   {
     id: "theme-4",
+    name: "quatrième",
     subtitle: "Fresh Green",
     desc: "Vert forêt et sauge. Idéal pour cafés, cuisine saine, brunchs et bio.",
     bgPreview: "#f4f8f5",
@@ -51,6 +55,7 @@ const THEMES = [
   },
   {
     id: "theme-5",
+    name: "cinquième",
     subtitle: "Energetic Orange",
     desc: "Teintes festives orange et ambre sur fond sombre. Dynamique et percutant.",
     bgPreview: "#161311",
