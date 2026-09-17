@@ -19,9 +19,9 @@ const BRAND = {
   blueDark: "#1670E8",
   blueSoft: "#EAF4FF",
 
-  orange: "#FF5A36",
-  orangeDark: "#E84525",
-  orangeSoft: "#FFF1ED",
+  violet: "#7357FF",
+  violetDark: "#5A3FE6",
+  violetSoft: "#F0EDFF",
 
   ink: "#080B10",
   dark: "#10151D",
@@ -82,46 +82,31 @@ const steps = [
   },
 ];
 
-/* =========================================================
-   SECTION BADGE
-========================================================= */
-
 function SectionBadge({
   title,
   accent = "blue",
 }: {
   title: string;
-  accent?: "blue" | "orange";
+  accent?: "blue" | "violet";
 }) {
-  const isOrange = accent === "orange";
+  const isViolet = accent === "violet";
 
   return (
     <motion.div
-      initial={{
-        opacity: 0,
-        y: 10,
-      }}
-      whileInView={{
-        opacity: 1,
-        y: 0,
-      }}
-      viewport={{
-        once: true,
-        amount: 0.8,
-      }}
-      transition={{
-        duration: 0.5,
-      }}
+      initial={{ opacity: 0, y: 10 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.8 }}
+      transition={{ duration: 0.5 }}
       className="inline-flex items-center gap-2.5 rounded-full border px-3.5 py-2 text-[10px] font-bold uppercase tracking-[0.2em]"
       style={{
-        borderColor: isOrange
-          ? "rgba(255,90,54,.18)"
+        borderColor: isViolet
+          ? "rgba(115,87,255,.18)"
           : "rgba(47,140,255,.18)",
-        backgroundColor: isOrange
-          ? BRAND.orangeSoft
+        backgroundColor: isViolet
+          ? BRAND.violetSoft
           : BRAND.blueSoft,
-        color: isOrange
-          ? BRAND.orangeDark
+        color: isViolet
+          ? BRAND.violetDark
           : BRAND.blueDark,
       }}
     >
@@ -129,8 +114,8 @@ function SectionBadge({
         <span
           className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-50"
           style={{
-            backgroundColor: isOrange
-              ? BRAND.orange
+            backgroundColor: isViolet
+              ? BRAND.violet
               : BRAND.blue,
           }}
         />
@@ -138,8 +123,8 @@ function SectionBadge({
         <span
           className="relative inline-flex h-1.5 w-1.5 rounded-full"
           style={{
-            backgroundColor: isOrange
-              ? BRAND.orange
+            backgroundColor: isViolet
+              ? BRAND.violet
               : BRAND.blue,
           }}
         />
@@ -149,10 +134,6 @@ function SectionBadge({
     </motion.div>
   );
 }
-
-/* =========================================================
-   DECORATIVE GRID
-========================================================= */
 
 function DecorativeGrid() {
   return (
@@ -169,25 +150,28 @@ function DecorativeGrid() {
   );
 }
 
-/* =========================================================
-   SIMPLE PREMIUM BUTTON
-========================================================= */
-
 function PremiumButton({
   href,
   children,
-  variant = "orange",
+  variant = "blue",
   icon: Icon = ArrowRight,
 }: {
   href: string;
   children: React.ReactNode;
-  variant?: "orange" | "dark" | "light";
+  variant?: "blue" | "dark" | "light" | "violet";
   icon?: React.ElementType;
 }) {
   const variants = {
-    orange: {
-      background: BRAND.orange,
-      hoverBackground: BRAND.orangeDark,
+    blue: {
+      background: BRAND.blue,
+      hoverBackground: BRAND.blueDark,
+      color: "#FFFFFF",
+      border: "transparent",
+    },
+
+    violet: {
+      background: BRAND.violet,
+      hoverBackground: BRAND.violetDark,
       color: "#FFFFFF",
       border: "transparent",
     },
@@ -211,14 +195,8 @@ function PremiumButton({
 
   return (
     <motion.div
-      initial={{
-        opacity: 0,
-        y: 8,
-      }}
-      animate={{
-        opacity: 1,
-        y: 0,
-      }}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{
         duration: 0.45,
         ease: [0.22, 1, 0.36, 1],
@@ -226,12 +204,8 @@ function PremiumButton({
     >
       <Link href={href}>
         <motion.div
-          whileHover={{
-            y: -2,
-          }}
-          whileTap={{
-            scale: 0.98,
-          }}
+          whileHover={{ y: -2 }}
+          whileTap={{ scale: 0.98 }}
           transition={{
             type: "spring",
             stiffness: 400,
@@ -243,11 +217,13 @@ function PremiumButton({
             color: style.color,
             borderColor: style.border,
             boxShadow:
-              variant === "orange"
-                ? "0 8px 24px rgba(255,90,54,.14)"
-                : variant === "dark"
-                  ? "0 8px 24px rgba(8,11,16,.12)"
-                  : "0 6px 20px rgba(8,11,16,.05)",
+              variant === "blue"
+                ? "0 8px 24px rgba(47,140,255,.16)"
+                : variant === "violet"
+                  ? "0 8px 24px rgba(115,87,255,.16)"
+                  : variant === "dark"
+                    ? "0 8px 24px rgba(8,11,16,.12)"
+                    : "0 6px 20px rgba(8,11,16,.05)",
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.backgroundColor =
@@ -262,9 +238,7 @@ function PremiumButton({
 
           <motion.span
             className="flex items-center justify-center"
-            whileHover={{
-              x: 3,
-            }}
+            whileHover={{ x: 3 }}
             transition={{
               type: "spring",
               stiffness: 400,
@@ -278,10 +252,6 @@ function PremiumButton({
     </motion.div>
   );
 }
-
-/* =========================================================
-   ANIMATED QR CODE
-========================================================= */
 
 function AnimatedQRCode() {
   const size = 25;
@@ -303,7 +273,7 @@ function AnimatedQRCode() {
         className="absolute inset-[-65px] rounded-full bg-blue-500/30 blur-[80px]"
       />
 
-      {/* ORANGE AURA */}
+      {/* VIOLET AURA */}
       <motion.div
         animate={{
           scale: [1.05, 0.95, 1.05],
@@ -314,7 +284,7 @@ function AnimatedQRCode() {
           repeat: Infinity,
           ease: "easeInOut",
         }}
-        className="absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-orange-400/20 blur-[90px]"
+        className="absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-violet-500/20 blur-[90px]"
       />
 
       {/* FLOATING SCAN CARD */}
@@ -330,7 +300,13 @@ function AnimatedQRCode() {
         className="absolute -right-8 top-7 z-30 hidden rounded-[14px] border border-white/80 bg-white/90 px-4 py-3 shadow-[0_20px_60px_rgba(8,11,16,.12)] backdrop-blur-xl sm:block"
       >
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-blue-50 text-blue-600">
+          <div
+            className="flex h-9 w-9 items-center justify-center rounded-[10px]"
+            style={{
+              backgroundColor: BRAND.blueSoft,
+              color: BRAND.blueDark,
+            }}
+          >
             <ScanLine size={17} />
           </div>
 
@@ -363,9 +339,7 @@ function AnimatedQRCode() {
           <div className="relative overflow-hidden rounded-[20px] bg-white p-4 shadow-[inset_0_0_0_1px_rgba(8,11,16,.035)]">
 
             <div className="grid aspect-square w-[270px] grid-cols-[repeat(25,1fr)] sm:w-[350px]">
-              {Array.from({
-                length: 625,
-              }).map((_, index) => {
+              {Array.from({ length: 625 }).map((_, index) => {
                 const row = Math.floor(index / size);
                 const col = index % size;
 
@@ -390,12 +364,10 @@ function AnimatedQRCode() {
                     r === 6 ||
                     c === 0 ||
                     c === 6 ||
-                    (
-                      r >= 2 &&
+                    (r >= 2 &&
                       r <= 4 &&
                       c >= 2 &&
-                      c <= 4
-                    )
+                      c <= 4)
                   );
                 };
 
@@ -410,13 +382,10 @@ function AnimatedQRCode() {
                   (row >= 17 && col <= 7);
 
                 let active =
-                  (
-                    (
-                      row * 41 +
-                      col * 23 +
-                      row * col * 7
-                    ) % 11
-                  ) < 4;
+                  ((row * 41 +
+                    col * 23 +
+                    row * col * 7) %
+                    11) < 4;
 
                 if (isFinder) {
                   active = true;
@@ -450,7 +419,7 @@ function AnimatedQRCode() {
                             BRAND.ink,
                             BRAND.ink,
                             BRAND.blue,
-                            BRAND.blue,
+                            BRAND.violet,
                             BRAND.ink,
                           ]
                         : "#FFFFFF",
@@ -481,9 +450,9 @@ function AnimatedQRCode() {
               className="pointer-events-none absolute left-4 right-4 h-[2px]"
               style={{
                 background:
-                  "linear-gradient(90deg, transparent, #2F8CFF, transparent)",
+                  "linear-gradient(90deg, transparent, #7357FF, #2F8CFF, transparent)",
                 boxShadow:
-                  "0 0 20px rgba(47,140,255,.85)",
+                  "0 0 20px rgba(115,87,255,.75)",
               }}
             />
           </div>
@@ -503,7 +472,13 @@ function AnimatedQRCode() {
         className="absolute -bottom-5 -left-6 z-30 rounded-[14px] border border-white/80 bg-white/95 px-4 py-3 shadow-[0_20px_60px_rgba(8,11,16,.12)] backdrop-blur-xl"
       >
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-orange-50 text-[#FF5A36]">
+          <div
+            className="flex h-9 w-9 items-center justify-center rounded-[10px]"
+            style={{
+              backgroundColor: BRAND.violetSoft,
+              color: BRAND.violet,
+            }}
+          >
             <Sparkles size={17} />
           </div>
 
@@ -513,7 +488,7 @@ function AnimatedQRCode() {
             </p>
 
             <p className="text-sm font-bold text-[#080B10]">
-              Un seul lien.
+              Un seul scan.
             </p>
           </div>
         </div>
@@ -522,17 +497,11 @@ function AnimatedQRCode() {
   );
 }
 
-/* =========================================================
-   HOME
-========================================================= */
-
 export default function HomePage() {
   return (
     <main className="min-h-screen overflow-hidden bg-white font-sans text-[#080B10] selection:bg-blue-100 selection:text-blue-700">
 
-      {/* ===================================================
-          HEADER
-      =================================================== */}
+      {/* HEADER */}
 
       <motion.header
         initial={{
@@ -554,6 +523,7 @@ export default function HomePage() {
         <div className="relative mx-auto flex h-[74px] max-w-[1440px] items-center justify-between px-5 sm:px-8 lg:px-10">
 
           {/* LOGO */}
+
           <Link
             href="/"
             aria-label="MonCode - accueil"
@@ -563,7 +533,12 @@ export default function HomePage() {
               Mon
             </span>
 
-            <span className="text-[#FF5A36] transition-colors duration-300 group-hover:text-[#E84525]">
+            <span
+              className="transition-colors duration-300 group-hover:text-[#5A3FE6]"
+              style={{
+                color: BRAND.violet,
+              }}
+            >
               Code
             </span>
 
@@ -582,6 +557,7 @@ export default function HomePage() {
           </Link>
 
           {/* NAV */}
+
           <nav className="hidden items-center gap-1 md:flex">
             <Link
               href="#solutions"
@@ -599,8 +575,8 @@ export default function HomePage() {
           </nav>
 
           {/* ACTIONS */}
-          <div className="flex items-center gap-2 sm:gap-3">
 
+          <div className="flex items-center gap-2 sm:gap-3">
             <Link
               href="/connexion"
               className="hidden rounded-[9px] px-4 py-2.5 text-[13px] font-semibold text-slate-500 transition hover:text-[#080B10] sm:block"
@@ -610,7 +586,7 @@ export default function HomePage() {
 
             <PremiumButton
               href="/carte-visite"
-              variant="orange"
+              variant="blue"
               icon={ArrowRight}
             >
               Commencer
@@ -619,15 +595,15 @@ export default function HomePage() {
         </div>
       </motion.header>
 
-      {/* ===================================================
-          HERO
-      =================================================== */}
+      {/* HERO */}
 
       <section className="relative min-h-[780px] overflow-hidden pt-32 sm:pt-40 lg:min-h-[900px] lg:pt-44">
 
         <DecorativeGrid />
 
         <div className="pointer-events-none absolute inset-0 -z-10">
+
+          {/* BLUE */}
 
           <motion.div
             animate={{
@@ -642,36 +618,41 @@ export default function HomePage() {
             className="absolute right-[-12%] top-[2%] h-[650px] w-[650px] rounded-full bg-blue-100/70 blur-[150px]"
           />
 
+          {/* VIOLET */}
+
           <motion.div
             animate={{
-              x: [0, -20, 0],
-              y: [0, 20, 0],
+              x: [0, -25, 0],
+              y: [0, 15, 0],
             }}
             transition={{
-              duration: 15,
+              duration: 14,
               repeat: Infinity,
               ease: "easeInOut",
             }}
-            className="absolute bottom-[-20%] left-[-12%] h-[600px] w-[600px] rounded-full bg-slate-100 blur-[150px]"
+            className="absolute bottom-[-20%] left-[-12%] h-[600px] w-[600px] rounded-full bg-violet-100/70 blur-[150px]"
           />
+
+          {/* SMALL BLUE/VIOLET MIX */}
 
           <motion.div
             animate={{
               scale: [1, 1.15, 1],
-              opacity: [0.5, 0.8, 0.5],
+              opacity: [0.35, 0.65, 0.35],
             }}
             transition={{
               duration: 10,
               repeat: Infinity,
               ease: "easeInOut",
             }}
-            className="absolute left-[45%] top-[25%] h-[300px] w-[300px] rounded-full bg-orange-50/70 blur-[120px]"
+            className="absolute left-[45%] top-[25%] h-[300px] w-[300px] rounded-full bg-violet-50/80 blur-[120px]"
           />
         </div>
 
         <div className="mx-auto grid max-w-7xl items-center gap-20 px-6 sm:px-10 lg:grid-cols-[1.02fr_.98fr] lg:gap-10">
 
           {/* HERO COPY */}
+
           <motion.div
             initial={{
               opacity: 0,
@@ -689,7 +670,7 @@ export default function HomePage() {
           >
             <SectionBadge
               title="Carte de visite digitale"
-              accent="orange"
+              accent="violet"
             />
 
             <motion.h1
@@ -711,7 +692,12 @@ export default function HomePage() {
 
               <br />
 
-              <span className="relative inline-block text-blue-600">
+              <span
+                className="relative inline-block"
+                style={{
+                  color: BRAND.blue,
+                }}
+              >
                 Un scan.
 
                 <motion.span
@@ -726,7 +712,11 @@ export default function HomePage() {
                     duration: 0.8,
                     ease: "easeOut",
                   }}
-                  className="absolute -bottom-2 left-0 h-[3px] rounded-full bg-blue-500/30"
+                  className="absolute -bottom-2 left-0 h-[3px] rounded-full"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, #2F8CFF, #7357FF)",
+                  }}
                 />
               </span>
             </motion.h1>
@@ -751,12 +741,11 @@ export default function HomePage() {
               QR Code.
             </motion.p>
 
-            {/* BUTTONS */}
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
 
               <PremiumButton
                 href="/carte-visite"
-                variant="orange"
+                variant="blue"
                 icon={ArrowRight}
               >
                 Créer mon MonCode
@@ -772,7 +761,6 @@ export default function HomePage() {
 
             </div>
 
-            {/* CHECKS */}
             <motion.div
               initial={{
                 opacity: 0,
@@ -797,7 +785,7 @@ export default function HomePage() {
               <div className="flex items-center gap-2">
                 <Check
                   size={16}
-                  className="text-[#FF5A36]"
+                  className="text-violet-500"
                 />
                 Partage instantané
               </div>
@@ -813,6 +801,7 @@ export default function HomePage() {
           </motion.div>
 
           {/* QR */}
+
           <motion.div
             initial={{
               opacity: 0,
@@ -838,9 +827,7 @@ export default function HomePage() {
         <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#F7F9FC] to-transparent" />
       </section>
 
-      {/* ===================================================
-          FEATURES
-      =================================================== */}
+      {/* FEATURES */}
 
       <section
         id="solutions"
@@ -876,14 +863,14 @@ export default function HomePage() {
                 secondes.
               </p>
             </div>
-
           </div>
 
           <div className="mt-16 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 
             {features.map((feature, index) => {
               const Icon = feature.icon;
-              const orange =
+
+              const violet =
                 index === 1 || index === 3;
 
               return (
@@ -910,7 +897,6 @@ export default function HomePage() {
                   }}
                   className="group relative overflow-hidden rounded-[18px] border border-slate-200/80 bg-white p-7 shadow-[0_8px_35px_rgba(8,11,16,.035)] transition-all duration-500 hover:border-blue-100 hover:shadow-[0_30px_80px_rgba(8,11,16,.10)]"
                 >
-
                   <motion.div
                     initial={{
                       x: "-120%",
@@ -929,8 +915,8 @@ export default function HomePage() {
                   <div
                     className="absolute right-[-50px] top-[-50px] h-36 w-36 rounded-full opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-100"
                     style={{
-                      backgroundColor: orange
-                        ? "#FFE0D7"
+                      backgroundColor: violet
+                        ? "#E5DFFF"
                         : "#DDEEFF",
                     }}
                   />
@@ -947,11 +933,11 @@ export default function HomePage() {
                     }}
                     className="relative mb-7 flex h-12 w-12 items-center justify-center rounded-[12px]"
                     style={{
-                      backgroundColor: orange
-                        ? BRAND.orangeSoft
+                      backgroundColor: violet
+                        ? BRAND.violetSoft
                         : BRAND.blueSoft,
-                      color: orange
-                        ? BRAND.orange
+                      color: violet
+                        ? BRAND.violet
                         : BRAND.blue,
                     }}
                   >
@@ -975,8 +961,8 @@ export default function HomePage() {
                     }}
                     className="relative mt-7 h-1 rounded-full"
                     style={{
-                      backgroundColor: orange
-                        ? BRAND.orange
+                      backgroundColor: violet
+                        ? BRAND.violet
                         : BRAND.blue,
                     }}
                   />
@@ -987,15 +973,12 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ===================================================
-          HOW IT WORKS
-      =================================================== */}
+      {/* HOW IT WORKS */}
 
       <section
         id="fonctionnement"
         className="relative overflow-hidden px-6 py-24 sm:px-10 lg:px-14 lg:py-32"
       >
-
         <motion.div
           animate={{
             scale: [1, 1.1, 1],
@@ -1006,7 +989,7 @@ export default function HomePage() {
             repeat: Infinity,
             ease: "easeInOut",
           }}
-          className="pointer-events-none absolute left-1/2 top-1/2 h-[600px] w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-50/50 blur-[140px]"
+          className="pointer-events-none absolute left-1/2 top-1/2 h-[600px] w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-violet-50/50 blur-[140px]"
         />
 
         <div className="relative mx-auto max-w-7xl">
@@ -1015,7 +998,7 @@ export default function HomePage() {
 
             <SectionBadge
               title="Fonctionnement"
-              accent="orange"
+              accent="violet"
             />
 
             <h2 className="mt-5 text-4xl font-black leading-[1.02] tracking-[-0.05em] sm:text-5xl">
@@ -1041,7 +1024,7 @@ export default function HomePage() {
 
             {steps.map((step, index) => {
               const Icon = step.icon;
-              const orange = index === 1;
+              const violet = index === 1;
 
               return (
                 <motion.div
@@ -1066,7 +1049,6 @@ export default function HomePage() {
                   }}
                   className="group relative rounded-[18px] border border-slate-200/80 bg-white/90 p-8 shadow-[0_12px_45px_rgba(8,11,16,.045)] backdrop-blur-sm transition-all duration-500 hover:border-blue-100 hover:shadow-[0_25px_70px_rgba(8,11,16,.09)]"
                 >
-
                   <div className="relative flex items-center justify-between">
 
                     <motion.div
@@ -1081,11 +1063,11 @@ export default function HomePage() {
                       }}
                       className="flex h-14 w-14 items-center justify-center rounded-[13px] shadow-sm"
                       style={{
-                        backgroundColor: orange
-                          ? BRAND.orangeSoft
+                        backgroundColor: violet
+                          ? BRAND.violetSoft
                           : BRAND.blueSoft,
-                        color: orange
-                          ? BRAND.orange
+                        color: violet
+                          ? BRAND.violet
                           : BRAND.blue,
                       }}
                     >
@@ -1114,8 +1096,8 @@ export default function HomePage() {
                     }}
                     className="mt-7 h-1 rounded-full"
                     style={{
-                      backgroundColor: orange
-                        ? BRAND.orange
+                      backgroundColor: violet
+                        ? BRAND.violet
                         : BRAND.blue,
                     }}
                   />
@@ -1126,9 +1108,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ===================================================
-          CTA
-      =================================================== */}
+      {/* CTA */}
 
       <section className="px-5 py-10 sm:px-10 lg:px-14 lg:py-20">
 
@@ -1150,6 +1130,8 @@ export default function HomePage() {
           className="relative mx-auto max-w-7xl overflow-hidden rounded-[28px] bg-[#080B10] px-7 py-20 text-center sm:px-16 lg:py-28"
         >
 
+          {/* BLUE GLOW */}
+
           <motion.div
             animate={{
               x: [0, 40, 0],
@@ -1163,6 +1145,8 @@ export default function HomePage() {
             className="absolute -right-40 -top-40 h-96 w-96 rounded-full bg-blue-500/30 blur-[100px]"
           />
 
+          {/* VIOLET GLOW */}
+
           <motion.div
             animate={{
               x: [0, -30, 0],
@@ -1173,7 +1157,7 @@ export default function HomePage() {
               repeat: Infinity,
               ease: "easeInOut",
             }}
-            className="absolute -bottom-48 -left-24 h-96 w-96 rounded-full bg-[#FF5A36]/20 blur-[120px]"
+            className="absolute -bottom-48 -left-24 h-96 w-96 rounded-full bg-violet-500/25 blur-[120px]"
           />
 
           <div
@@ -1189,13 +1173,18 @@ export default function HomePage() {
 
             <SectionBadge
               title="Votre identité professionnelle"
-              accent="orange"
+              accent="violet"
             />
 
             <h2 className="mt-7 text-4xl font-black leading-[1.02] tracking-[-0.05em] text-white sm:text-5xl lg:text-6xl">
               Votre prochaine rencontre
 
-              <span className="block text-blue-400">
+              <span
+                className="block"
+                style={{
+                  color: BRAND.blue,
+                }}
+              >
                 commence par un scan.
               </span>
             </h2>
@@ -1209,7 +1198,7 @@ export default function HomePage() {
             <div className="mt-10 flex justify-center">
               <PremiumButton
                 href="/carte-visite"
-                variant="orange"
+                variant="blue"
                 icon={ArrowRight}
               >
                 Créer mon MonCode
@@ -1219,9 +1208,7 @@ export default function HomePage() {
         </motion.div>
       </section>
 
-      {/* ===================================================
-          FOOTER
-      =================================================== */}
+      {/* FOOTER */}
 
       <footer className="border-t border-slate-100 bg-white px-6 py-10 sm:px-10 lg:px-14">
 
@@ -1235,7 +1222,11 @@ export default function HomePage() {
               Mon
             </span>
 
-            <span className="text-[#FF5A36]">
+            <span
+              style={{
+                color: BRAND.violet,
+              }}
+            >
               Code
             </span>
 
@@ -1262,7 +1253,6 @@ export default function HomePage() {
               Tous droits réservés.
             </span>
           </div>
-
         </div>
       </footer>
     </main>
