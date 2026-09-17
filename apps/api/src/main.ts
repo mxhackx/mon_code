@@ -11,7 +11,6 @@ async function bootstrap() {
   const allowedOrigins = [
     process.env.APP_URL,
     'http://localhost:3000', 
-    'http://127.0.0.1:3000',
   ].filter(Boolean) as string[];
 
   app.enableCors({
@@ -19,7 +18,7 @@ async function bootstrap() {
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        callback(new Error('Bloqué par la politique CORS (Origine non autorisée)'));
+        callback(null, false);
       }
     },
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
