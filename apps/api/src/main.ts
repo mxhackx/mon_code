@@ -9,14 +9,14 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   const allowedOrigins = [
-    process.env.APP_URL,       // Doit valoir "https://moncode.bj" sur Render
+    process.env.APP_URL,
     'http://localhost:3000', 
     'http://127.0.0.1:3000',
   ].filter(Boolean) as string[];
 
   app.enableCors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+      if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
         callback(new Error('Bloqué par la politique CORS (Origine non autorisée)'));
