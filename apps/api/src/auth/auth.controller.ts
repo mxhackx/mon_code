@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import type { Request, Response } from 'express';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller('auth')
 export class AuthController {
@@ -19,6 +20,7 @@ export class AuthController {
   /**
    * Connexion unifiée : Administrateur ou Utilisateur Restaurant
    */
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('login')
   async login(
     @Body()
@@ -37,14 +39,14 @@ export class AuthController {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 3600 * 1000,
+      maxAge: 60 * 60 * 1000,
     });
     
     res.cookie('refresh_token', result.refresh_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 30 * 24 * 3600 * 1000,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
     
     return result;
@@ -68,9 +70,8 @@ export class AuthController {
     @Body('refreshToken') altRefreshToken?: string,
   ) {
     let token = bodyRefreshToken ?? altRefreshToken ?? '';
-    if (!token && req.headers.cookie) {
-      const match = req.headers.cookie.match(/refresh_token=([^;]+)/);
-      if (match) token = match[1];
+    if (!token && req.cookies) {
+      token = req.cookies['refresh_token'];
     }
     const result = await this.authService.refresh(token);
     
@@ -78,14 +79,14 @@ export class AuthController {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 3600 * 1000,
+      maxAge: 60 * 60 * 1000,
     });
     
     res.cookie('refresh_token', result.refresh_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 30 * 24 * 3600 * 1000,
+      maxAge:  7 * 24 * 60 * 60 * 1000,
     });
     
     return result;
@@ -97,9 +98,8 @@ export class AuthController {
   @Get('me')
   async getProfile(@Req() req: Request, @Headers('authorization') authHeader?: string) {
     let token = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
-    if (!token && req.headers.cookie) {
-      const match = req.headers.cookie.match(/access_token=([^;]+)/);
-      if (match) token = match[1];
+    if (!token && req.cookies) {
+      token = req.cookies['refresh_token'];
     }
     if (!token) {
       throw new UnauthorizedException('Token Bearer ou cookie manquant');
@@ -119,16 +119,15 @@ export class AuthController {
   /**
    * Mise à jour des identifiants administrateur
    */
-  @Patch('admin/credentials')
+  @Patch(['credentials', 'admin/credentials'])
   async updateCredentials(
     @Req() req: Request,
     @Headers('authorization') authHeader: string,
     @Body() body: { email?: string; newEmail?: string; password?: string; newPassword?: string },
   ) {
     let token = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
-    if (!token && req.headers.cookie) {
-      const match = req.headers.cookie.match(/access_token=([^;]+)/);
-      if (match) token = match[1];
+    if (!token && req.cookies) {
+      token = req.cookies['refresh_token'];
     }
     if (!token) {
       throw new UnauthorizedException('Token Bearer ou cookie manquant');

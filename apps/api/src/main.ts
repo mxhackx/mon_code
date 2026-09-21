@@ -2,34 +2,34 @@ import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import * as express from 'express';
-import * as path from 'path';
+import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  // Activer CORS sécurisé pour permettre les requêtes depuis apps/web
   const allowedOrigins = [
-    process.env.APP_URL,
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-  ].filter(Boolean) as string[];
+  process.env.APP_URL,
+  'http://localhost:3000', 
+].filter(Boolean) as string[];
 
-  app.enableCors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
-        callback(null, true);
-      } else {
-        callback(null, false);
-      }
-    },
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    credentials: true,
-  });
-
-  // Servir les images enregistrées dans le dossier uploads
-  const uploadsDir = path.join(process.cwd(), 'uploads');
-  app.use('/uploads', express.static(uploadsDir));
+app.enableCors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(null, false);
+    }
+  },
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+  credentials: true,  
+});
+  app.use(
+    cookieParser(),
+    helmet({
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    })
+  );
 
   const port = process.env.PORT ?? 5500;
   await app.listen(port);

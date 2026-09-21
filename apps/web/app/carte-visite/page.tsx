@@ -349,7 +349,7 @@ export default function CarteVisitePage() {
           HEADER
       ===================================================== */}
 
-      <header className="mx-auto flex w-full max-w-[1180px] items-center justify-between px-6 py-6 sm:px-8 lg:px-10">
+      <header className="mx-auto flex w-full max-w-295 items-center justify-between px-6 py-6 sm:px-8 lg:px-10">
         <Link
           href="/"
           aria-label="MonCode - accueil"
@@ -362,7 +362,7 @@ export default function CarteVisitePage() {
           </span>
 
           <span
-            className="ml-0.5 inline-block h-1.5 w-1.5 translate-y-[-2px] rounded-full"
+            className="ml-0.5 inline-block h-1.5 w-1.5 -translate-y-0.5 rounded-full"
             style={{
               backgroundColor: BRAND.violet,
             }}
@@ -392,7 +392,7 @@ export default function CarteVisitePage() {
           MAIN
       ===================================================== */}
 
-      <section className="mx-auto w-full max-w-[1100px] px-5 pb-24 pt-12 sm:px-8 lg:px-10 lg:pt-20">
+      <section className="mx-auto w-full max-w-275 px-5 pb-24 pt-12 sm:px-8 lg:px-10 lg:pt-20">
         <AnimatePresence mode="wait">
           {!qrResult ? (
             /* =================================================
@@ -425,7 +425,7 @@ export default function CarteVisitePage() {
                     Mode Express Direct
                   </SectionBadge>
 
-                  <h1 className="mt-6 max-w-[520px] text-[clamp(48px,6vw,74px)] font-black leading-[0.9] tracking-[-0.075em]">
+                  <h1 className="mt-6 max-w-130 text-[clamp(48px,6vw,74px)] font-black leading-[0.9] tracking-[-0.075em]">
                     Votre carte.
                     <br />
 
@@ -438,7 +438,7 @@ export default function CarteVisitePage() {
                     </span>
                   </h1>
 
-                  <p className="mt-7 max-w-[470px] text-[14px] leading-7 text-[#697382]">
+                  <p className="mt-7 max-w-117.5 text-[14px] leading-7 text-[#697382]">
                     Transformez simplement votre carte de visite
                     en un QR Code partageable. Votre carte
                     s&apos;ouvre directement après le scan.
@@ -517,7 +517,7 @@ export default function CarteVisitePage() {
 
                           <label
                             htmlFor={inputId}
-                            className="group flex min-h-[350px] cursor-pointer flex-col items-center justify-center rounded-[17px] border border-dashed border-[#CDD5DF] bg-[#FCFDFE] px-6 text-center transition-colors duration-200 hover:border-[#A9C8EE] hover:bg-[#FAFCFF]"
+                            className="group flex min-h-87.5 cursor-pointer flex-col items-center justify-center rounded-[17px] border border-dashed border-[#CDD5DF] bg-[#FCFDFE] px-6 text-center transition-colors duration-200 hover:border-[#A9C8EE] hover:bg-[#FAFCFF]"
                           >
                             <UploadVisual />
 
@@ -567,7 +567,7 @@ export default function CarteVisitePage() {
                               </div>
 
                               <div className="min-w-0">
-                                <p className="max-w-[220px] truncate text-[10px] font-semibold">
+                                <p className="max-w-55 truncate text-[10px] font-semibold">
                                   {file?.name}
                                 </p>
 
@@ -592,16 +592,16 @@ export default function CarteVisitePage() {
                             </button>
                           </div>
 
-                          <div className="flex min-h-[350px] items-center justify-center bg-[#F8F9FB] p-5">
-                            <div className="relative max-h-[330px] max-w-full overflow-hidden rounded-[11px] border border-[#E2E6EB] bg-white shadow-[0_10px_30px_rgba(8,11,16,.06)]">
+                          <div className="flex min-h-87.5 items-center justify-center bg-[#F8F9FB] p-5">
+                            <div className="relative max-h-82.5 max-w-full overflow-hidden rounded-[11px] border border-[#E2E6EB] bg-white shadow-[0_10px_30px_rgba(8,11,16,.06)]">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
                                 src={previewUrl}
                                 alt="Aperçu de votre carte de visite"
-                                className="block max-h-[320px] max-w-full object-contain"
+                                className="block max-h-80 max-w-full object-contain"
                               />
 
-                              <div className="absolute bottom-2.5 left-2.5 flex items-center gap-1.5 rounded-[6px] bg-[#080B10]/80 px-2 py-1 text-[8px] font-bold text-white backdrop-blur-sm">
+                              <div className="absolute bottom-2.5 left-2.5 flex items-center gap-1.5 rounded-md bg-[#080B10]/80 px-2 py-1 text-[8px] font-bold text-white backdrop-blur-sm">
                                 <span
                                   className="h-1.5 w-1.5 rounded-full"
                                   style={{
@@ -671,7 +671,7 @@ export default function CarteVisitePage() {
               </div>
 
               {/* STEPS */}
-              <div className="mx-auto mt-16 flex max-w-[650px] items-center justify-center gap-6 border-t border-[#EEF0F3] pt-6 sm:gap-10">
+              <div className="mx-auto mt-16 flex max-w-162.5 items-center justify-center gap-6 border-t border-[#EEF0F3] pt-6 sm:gap-10">
                 {[
                   {
                     number: "01",
@@ -740,7 +740,7 @@ export default function CarteVisitePage() {
                 ease: [0.22, 1, 0.36, 1],
               }}
             >
-              <div className="mx-auto max-w-[760px]">
+              <div className="mx-auto max-w-190">
                 {/* TITLE */}
                 <div className="text-center">
                   <SectionBadge>
@@ -760,7 +760,7 @@ export default function CarteVisitePage() {
                     </span>
                   </h1>
 
-                  <p className="mx-auto mt-5 max-w-[500px] text-[13px] leading-7 text-[#697382]">
+                  <p className="mx-auto mt-5 max-w-125 text-[13px] leading-7 text-[#697382]">
                     Votre QR Code donne maintenant accès
                     directement à votre carte de visite.
                   </p>
@@ -807,7 +807,7 @@ export default function CarteVisitePage() {
                     </motion.div>
 
                     {/* LINK */}
-                    <div className="mt-7 w-full max-w-[500px]">
+                    <div className="mt-7 w-full max-w-125">
                       <p className="mb-2 text-center text-[8px] font-bold uppercase tracking-[0.18em] text-[#A0A7B1]">
                         Votre lien MonCode
                       </p>
@@ -885,11 +885,11 @@ export default function CarteVisitePage() {
       ===================================================== */}
 
       <footer className="border-t border-[#F0F1F3]">
-        <div className="mx-auto flex max-w-[1180px] items-center justify-between px-6 py-6 sm:px-8 lg:px-10">
+        <div className="mx-auto flex max-w-295 items-center justify-between px-6 py-6 sm:px-8 lg:px-10">
           <span className="text-[10px] font-bold tracking-[-0.03em] text-[#A0A7B1]">
             MonCode
           </span>
-
+ 
           <span className="text-[9px] text-[#B0B6BE]">
             Votre identité. Un scan.
           </span>

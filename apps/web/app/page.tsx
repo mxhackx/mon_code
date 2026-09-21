@@ -909,11 +909,11 @@ export default function HomePage() {
                     transition={{
                       duration: 0.8,
                     }}
-                    className="pointer-events-none absolute inset-y-0 left-0 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/80 to-transparent"
+                    className="pointer-events-none absolute inset-y-0 left-0 w-1/3 -skew-x-12 bg-li-to-r from-transparent via-white/80 to-transparent"
                   />
 
                   <div
-                    className="absolute right-[-50px] top-[-50px] h-36 w-36 rounded-full opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-100"
+                    className="absolute right-12.5 top-12.5 h-36 w-36 rounded-full opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-100"
                     style={{
                       backgroundColor: violet
                         ? "#E5DFFF"
@@ -931,7 +931,7 @@ export default function HomePage() {
                       stiffness: 300,
                       damping: 18,
                     }}
-                    className="relative mb-7 flex h-12 w-12 items-center justify-center rounded-[12px]"
+                    className="relative mb-7 flex h-12 w-12 items-center justify-center rounded-xl"
                     style={{
                       backgroundColor: violet
                         ? BRAND.violetSoft
@@ -1020,7 +1020,7 @@ export default function HomePage() {
 
           <div className="relative mt-20 grid gap-5 lg:grid-cols-3">
 
-            <div className="pointer-events-none absolute left-[17%] right-[17%] top-[58px] hidden h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent lg:block" />
+            <div className="pointer-events-none absolute left-[17%] right-[17%] top-14.5 hidden h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent lg:block" />
 
             {steps.map((step, index) => {
               const Icon = step.icon;

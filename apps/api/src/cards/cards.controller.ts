@@ -15,7 +15,6 @@ import {
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import type { Request, Response } from 'express';
 import 'multer';
-import type { FileFilterCallback } from 'multer';
 import { CardsService } from './cards.service';
 import { AuthService } from '../auth/auth.service';
 
@@ -44,7 +43,7 @@ export class CardsController {
       fileSize: 6 * 1024 * 1024,
       files: 10,
     },
-    fileFilter: (_req: Request, file: Express.Multer.File, callback: FileFilterCallback) => {
+    fileFilter: (_req: Request, file: Express.Multer.File, callback: (error: Error | null, acceptFile: boolean) => void) => {
       if (!file.mimetype || !file.mimetype.startsWith('image/')) {
         return callback(
           new BadRequestException(`Le fichier "${file.originalname}" n'est pas une image valide (format attendu: PNG, JPG, WEBP)`),
@@ -66,7 +65,7 @@ export class CardsController {
       { name: 'menu', maxCount: 8 },
     ], {
       limits: { fileSize: 6 * 1024 * 1024, files: 10 },
-      fileFilter: (_req: Request, file: Express.Multer.File, callback: FileFilterCallback) => {
+      fileFilter: (_req: Request, file: Express.Multer.File, callback: (error: Error | null, acceptFile: boolean) => void) => {
         if (!file.mimetype || !file.mimetype.startsWith('image/')) {
           return callback(new BadRequestException(`Le fichier "${file.originalname}" n'est pas une image valide`), false);
         }
@@ -81,9 +80,8 @@ export class CardsController {
     @Body() body?: CreateCardDto,
   ) {
     let token = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
-    if (!token && req.headers.cookie) {
-      const match = req.headers.cookie.match(/access_token=([^;]+)/);
-      if (match) token = match[1];
+    if (!token && (req as any).cookies) {
+      token = (req as any).cookies['access_token'];
     }
 
     if (!token) {
@@ -117,11 +115,11 @@ export class CardsController {
       { name: 'menu', maxCount: 8 },
     ], {
       limits: { fileSize: 6 * 1024 * 1024, files: 10 },
-      fileFilter: (_req: any, file: any, callback: any) => {
+      fileFilter: (_req: Request, file: Express.Multer.File, callback: (error: Error | null, acceptFile: boolean) => void) => {
         if (!file.mimetype || !file.mimetype.startsWith('image/')) {
           return callback(new BadRequestException(`Le fichier "${file.originalname}" n'est pas une image valide`), false);
         }
-        callback(null, true);
+           callback(null, true);
       }
     })
   )
@@ -149,9 +147,8 @@ export class CardsController {
   @Get()
   async getAllCards(@Req() req: Request, @Headers('authorization') authHeader?: string) {
     let token = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
-    if (!token && req.headers.cookie) {
-      const match = req.headers.cookie.match(/access_token=([^;]+)/);
-      if (match) token = match[1];
+    if (!token && (req as any).cookies) {
+      token = (req as any).cookies['access_token'];
     }
     if (!token) {
       throw new UnauthorizedException('Accès réservé aux administrateurs. Token d’authentification manquant.');
