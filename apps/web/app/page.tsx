@@ -211,7 +211,7 @@ function PremiumButton({
             stiffness: 400,
             damping: 25,
           }}
-          className="group inline-flex h-[50px] items-center gap-3 rounded-[14px] border px-5 text-[13px] font-bold tracking-[-0.01em] transition-colors duration-200"
+          className="group inline-flex h-12.5 items-center gap-3 rounded-[14px] border px-5 text-[13px] font-bold tracking-[-0.01em] transition-colors duration-200"
           style={{
             backgroundColor: style.background,
             color: style.color,
@@ -270,7 +270,7 @@ function AnimatedQRCode() {
           repeat: Infinity,
           ease: "easeInOut",
         }}
-        className="absolute inset-[-65px] rounded-full bg-blue-500/30 blur-[80px]"
+        className="absolute inset-16.5 rounded-full bg-blue-500/30 blur-[80px]"
       />
 
       {/* VIOLET AURA */}
@@ -335,10 +335,10 @@ function AnimatedQRCode() {
         }}
         className="relative rounded-[30px] border border-white/80 bg-white/75 p-3 shadow-[0_45px_120px_rgba(8,11,16,.16)] backdrop-blur-2xl sm:p-4"
       >
-        <div className="rounded-[24px] bg-[#F4F7FB] p-4 sm:p-5">
+        <div className="rounded-3xl bg-[#F4F7FB] p-4 sm:p-5">
           <div className="relative overflow-hidden rounded-[20px] bg-white p-4 shadow-[inset_0_0_0_1px_rgba(8,11,16,.035)]">
 
-            <div className="grid aspect-square w-[270px] grid-cols-[repeat(25,1fr)] sm:w-[350px]">
+            <div className="grid aspect-square w-67.5 grid-cols-[repeat(25,1fr)] sm:w-87.5">
               {Array.from({ length: 625 }).map((_, index) => {
                 const row = Math.floor(index / size);
                 const col = index % size;
@@ -447,7 +447,7 @@ function AnimatedQRCode() {
                 repeat: Infinity,
                 ease: "easeInOut",
               }}
-              className="pointer-events-none absolute left-4 right-4 h-[2px]"
+              className="pointer-events-none absolute left-4 right-4 h-0.5"
               style={{
                 background:
                   "linear-gradient(90deg, transparent, #7357FF, #2F8CFF, transparent)",
@@ -520,7 +520,7 @@ export default function HomePage() {
       >
         <div className="absolute inset-0 border-b border-slate-200/60 bg-white/80 backdrop-blur-2xl" />
 
-        <div className="relative mx-auto flex h-[74px] max-w-[1440px] items-center justify-between px-5 sm:px-8 lg:px-10">
+        <div className="relative mx-auto flex h-18.5 max-w-360 items-center justify-between px-5 sm:px-8 lg:px-10">
 
           {/* LOGO */}
 
@@ -597,7 +597,7 @@ export default function HomePage() {
 
       {/* HERO */}
 
-      <section className="relative min-h-[780px] overflow-hidden pt-32 sm:pt-40 lg:min-h-[900px] lg:pt-44">
+      <section className="relative min-h-195 overflow-hidden pt-32 sm:pt-40 lg:min-h-225 lg:pt-44">
 
         <DecorativeGrid />
 
@@ -615,7 +615,7 @@ export default function HomePage() {
               repeat: Infinity,
               ease: "easeInOut",
             }}
-            className="absolute right-[-12%] top-[2%] h-[650px] w-[650px] rounded-full bg-blue-100/70 blur-[150px]"
+            className="absolute right-[-12%] top-[2%] h-162.5 w-162.5 rounded-full bg-blue-100/70 blur-[150px]"
           />
 
           {/* VIOLET */}
@@ -630,7 +630,7 @@ export default function HomePage() {
               repeat: Infinity,
               ease: "easeInOut",
             }}
-            className="absolute bottom-[-20%] left-[-12%] h-[600px] w-[600px] rounded-full bg-violet-100/70 blur-[150px]"
+            className="absolute bottom-[-20%] left-[-12%] h-150 w-150 rounded-full bg-violet-100/70 blur-[150px]"
           />
 
           {/* SMALL BLUE/VIOLET MIX */}
@@ -645,7 +645,7 @@ export default function HomePage() {
               repeat: Infinity,
               ease: "easeInOut",
             }}
-            className="absolute left-[45%] top-[25%] h-[300px] w-[300px] rounded-full bg-violet-50/80 blur-[120px]"
+            className="absolute left-[45%] top-[25%] h-75 w-75 rounded-full bg-violet-50/80 blur-[120px]"
           />
         </div>
 
@@ -712,7 +712,7 @@ export default function HomePage() {
                     duration: 0.8,
                     ease: "easeOut",
                   }}
-                  className="absolute -bottom-2 left-0 h-[3px] rounded-full"
+                  className="absolute -bottom-2 left-0 h-0.75 rounded-full"
                   style={{
                     background:
                       "linear-gradient(90deg, #2F8CFF, #7357FF)",
@@ -824,7 +824,7 @@ export default function HomePage() {
           </motion.div>
         </div>
 
-        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#F7F9FC] to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-linear-to-t from-[#F7F9FC] to-transparent" />
       </section>
 
       {/* FEATURES */}
@@ -843,7 +843,7 @@ export default function HomePage() {
                 accent="blue"
               />
 
-              <h2 className="mt-5 text-4xl font-black leading-[1.02] tracking-[-0.05em] sm:text-5xl">
+              <h2 className="mt-5 text-4xl font-black leading-[1.02] tracking-tighter sm:text-5xl">
                 Votre carte de visite.
 
                 <br />
