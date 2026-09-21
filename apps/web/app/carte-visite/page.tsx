@@ -1,5 +1,6 @@
 "use client";
 
+import QRCodeStudio from "../components/QRCodeStudio";
 import {
   useId,
   useState,
@@ -22,7 +23,6 @@ import {
   Upload,
   X,
 } from "lucide-react";
-
 interface QrResult {
   slug: string;
   cardUrl: string;
@@ -222,6 +222,7 @@ export default function CarteVisitePage() {
   const [error, setError] = useState<string | null>(null);
   const [qrResult, setQrResult] = useState<QrResult | null>(null);
   const [copied, setCopied] = useState(false);
+  const [qrStyle, setQrStyle] = useState<string>("");
 
   const inputId = useId();
 
@@ -272,6 +273,7 @@ export default function CarteVisitePage() {
 
       formData.append("file", file);
       formData.append("themeId", "direct");
+      if (qrStyle) formData.append("qrStyle", qrStyle);
 
       const apiUrl =
         process.env.NEXT_PUBLIC_API_URL ||
@@ -649,21 +651,34 @@ export default function CarteVisitePage() {
                         )}
                       </AnimatePresence>
 
-                      {/* ACTION */}
-                      <div className="mt-5 flex flex-col items-center">
-                        <SimpleButton
-                          disabled={!file || isGenerating}
-                          onClick={handleGenerateQr}
-                          icon={QrCode}
-                        >
-                          {isGenerating
-                            ? "Génération..."
-                            : "Générer mon QR Code"}
-                        </SimpleButton>
+                      {/* ACTION & QR STUDIO */}
+                      <div className="mt-8 w-full border-t border-[#EEF0F3] pt-6">
+                        <h3 className="mb-4 text-center text-[12px] font-bold text-[#080B10]">
+                          Personnalisation de votre QR Code
+                        </h3>
+                        <div className="mb-6">
+                           <QRCodeStudio 
+                             dataUrl="https://visicard.moncode.com/c/APERÇU"
+                             logoUrl={previewUrl || undefined}
+                             onChange={(configStr) => setQrStyle(configStr)}
+                           />
+                        </div>
 
-                        <p className="mt-2.5 text-[8px] text-[#A1A8B2]">
-                          Génération sécurisée · Accès instantané
-                        </p>
+                        <div className="flex flex-col items-center">
+                          <SimpleButton
+                            disabled={!file || isGenerating}
+                            onClick={handleGenerateQr}
+                            icon={QrCode}
+                          >
+                            {isGenerating
+                              ? "Génération..."
+                              : "Générer mon QR Code"}
+                          </SimpleButton>
+
+                          <p className="mt-2.5 text-[8px] text-[#A1A8B2]">
+                            Génération sécurisée · Accès instantané
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
