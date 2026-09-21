@@ -43,7 +43,6 @@ export default function AdminPage() {
         <Link className="brand brand-small" href="/" aria-label="MonCode - accueil">
           <span>Mon</span>Code
         </Link>
-        <p className="header-note">Espace d&apos;administration sécurisé.</p>
       </header>
 
       <section className="hero">
@@ -65,7 +64,7 @@ export default function AdminPage() {
       </section>
 
       <footer className="site-footer">
-        <p>Administration MonCode • Vos données sont sécurisées</p>
+        <p>Administration MonCode</p>
       </footer>
     </main>
   );

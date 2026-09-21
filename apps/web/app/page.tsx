@@ -573,25 +573,6 @@ export default function HomePage() {
               Fonctionnement
             </Link>
           </nav>
-
-          {/* ACTIONS */}
-
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Link
-              href="/connexion"
-              className="hidden rounded-[9px] px-4 py-2.5 text-[13px] font-semibold text-slate-500 transition hover:text-[#080B10] sm:block"
-            >
-              Se connecter
-            </Link>
-
-            <PremiumButton
-              href="/intervenant"
-              variant="blue"
-              icon={ArrowRight}
-            >
-              Commencer
-            </PremiumButton>
-          </div>
         </div>
       </motion.header>
 
@@ -989,7 +970,7 @@ export default function HomePage() {
             repeat: Infinity,
             ease: "easeInOut",
           }}
-          className="pointer-events-none absolute left-1/2 top-1/2 h-[600px] w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-violet-50/50 blur-[140px]"
+          className="pointer-events-none absolute left-1/2 top-1/2 h-150 w-200 -translate-x-1/2 -translate-y-1/2 rounded-full bg-violet-50/50 blur-[140px]"
         />
 
         <div className="relative mx-auto max-w-7xl">
@@ -1001,7 +982,7 @@ export default function HomePage() {
               accent="violet"
             />
 
-            <h2 className="mt-5 text-4xl font-black leading-[1.02] tracking-[-0.05em] sm:text-5xl">
+            <h2 className="mt-5 text-4xl font-black leading-[1.02] tracking-tighter sm:text-5xl">
               Trois étapes.
 
               <br />
@@ -1020,7 +1001,7 @@ export default function HomePage() {
 
           <div className="relative mt-20 grid gap-5 lg:grid-cols-3">
 
-            <div className="pointer-events-none absolute left-[17%] right-[17%] top-14.5 hidden h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent lg:block" />
+            <div className="pointer-events-none absolute left-[17%] right-[17%] top-14.5 hidden h-px bg-linear-to-r from-transparent via-slate-200 to-transparent lg:block" />
 
             {steps.map((step, index) => {
               const Icon = step.icon;
@@ -1176,7 +1157,7 @@ export default function HomePage() {
               accent="violet"
             />
 
-            <h2 className="mt-7 text-4xl font-black leading-[1.02] tracking-[-0.05em] text-white sm:text-5xl lg:text-6xl">
+            <h2 className="mt-7 text-4xl font-black leading-[1.02] tracking-tighter text-white sm:text-5xl lg:text-6xl">
               Votre prochaine rencontre
 
               <span
