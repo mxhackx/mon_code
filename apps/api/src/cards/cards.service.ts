@@ -75,7 +75,7 @@ export class CardsService {
 
       if (uploadError) {
         this.logger.error(`Erreur upload Supabase: ${uploadError.message}`);
-        throw new BadRequestException(`Échec du stockage sur Supabase: ${uploadError.message}`);
+        throw new BadRequestException('Échec du stockage de l’image. Veuillez réessayer ultérieurement.');
       }
 
       const { data } = this.supabase.storage.from(this.bucketName).getPublicUrl(fileName);
@@ -216,7 +216,6 @@ export class CardsService {
     });
 
     return {
-      id: card.id.toString(),
       slug: card.slug,
       imageUrl: card.imageUrl,
       restaurantName: card.restaurantName ?? null,
@@ -226,10 +225,6 @@ export class CardsService {
       menuImages: menuImagesUrls,
       themeId: card.themeId ?? 'theme-1',
       qrStyle: card.qrStyle ?? 'style-1',
-      userName: card.userName ?? null,
-      clientName: card.clientName ?? null,
-      workDone: card.workDone ?? null,
-      amountReceived: card.amountReceived ?? null,
       cardUrl,
       qrCode,
       createdAt: card.createdAt,
@@ -258,7 +253,6 @@ export class CardsService {
 
     // Endpoint public : exclusion stricte des données d'intervention internes (userName, clientName, workDone, amountReceived)
     return {
-      id: card.id.toString(),
       slug: card.slug,
       imageUrl: card.imageUrl,
       restaurantName: card.restaurantName ?? null,
@@ -268,10 +262,6 @@ export class CardsService {
       menuImages,
       themeId: card.themeId ?? 'theme-1',
       qrStyle: card.qrStyle ?? 'style-1',
-      userName: card.userName ?? null,
-      clientName: card.clientName ?? null,
-      workDone: card.workDone ?? null,
-      amountReceived: card.amountReceived ?? null,
       cardUrl: `${appUrl}/c/${card.slug}`,
       createdAt: card.createdAt,
     };
@@ -358,16 +348,37 @@ export class CardsService {
       return { buffer, contentType, filename };
     }
 
-    // Repli via fetch HTTP sur card.imageUrl
-    if (card.imageUrl.startsWith('http://') || card.imageUrl.startsWith('https://')) {
-      const response = await fetch(card.imageUrl);
-      if (response.ok) {
-        const arrayBuffer = await response.arrayBuffer();
-        return {
-          buffer: Buffer.from(arrayBuffer),
-          contentType,
-          filename,
-        };
+    // Repli via fetch HTTP sécurisé (Anti-SSRF & Anti-DoS)
+    if (card.imageUrl.startsWith('https://')) {
+      try {
+        const urlObj = new URL(card.imageUrl);
+        const host = urlObj.hostname;
+
+        // 1. Liste noire basique anti-SSRF (Bloquer localhost et les IPs directes)
+        const isLocalhost = host === 'localhost' || host === '127.0.0.1' || host === '::1';
+        const isIpAddress = /^(\d{1,3}\.){3}\d{1,3}$/.test(host) || /^[0-9a-fA-F:]+$/.test(host);
+        
+        if (isLocalhost || isIpAddress) {
+          throw new Error('SSRF Bloqué : Résolution réseau interne ou IP directe interdite.');
+        }
+
+        // 2. Protection Anti-DoS (Timeout strict de 5 secondes)
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+        const response = await fetch(card.imageUrl, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+          const arrayBuffer = await response.arrayBuffer();
+          return {
+            buffer: Buffer.from(arrayBuffer),
+            contentType,
+            filename,
+          };
+        }
+      } catch (err) {
+        this.logger.warn(`Échec de récupération de l'image distante (sécurité ou réseau) : ${err}`);
       }
     }
 

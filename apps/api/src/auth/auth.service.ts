@@ -1,157 +1,173 @@
-import {
-  Injectable,
-  OnModuleInit,
-  Logger,
-  UnauthorizedException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import * as fs from 'fs';
-import * as path from 'path';
+
+export interface AuthSessionUser {
+  id: string;
+  email?: string;
+  role: 'admin' | 'user';
+}
+
+export interface AuthResult {
+  access_token: string;
+  refresh_token: string;
+  user: AuthSessionUser;
+  redirect: string;
+}
+
+export interface RefreshResult {
+  access_token: string;
+  refresh_token: string;
+  user: AuthSessionUser;
+}
 
 @Injectable()
-export class AuthService implements OnModuleInit {
+export class AuthService {
   private readonly logger = new Logger(AuthService.name);
   private supabase: SupabaseClient | null = null;
 
-  onModuleInit() {
+  constructor() {
+    this.logger.log('Initialisation du AuthService (Strictement basé sur Supabase)');
+  }
+
+  async onModuleInit() {
     const supabaseUrl = process.env.SUPABASE_URL;
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-    if (supabaseUrl && serviceRoleKey) {
-      this.supabase = createClient(supabaseUrl, serviceRoleKey, {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      });
-      this.ensureAdminUserExists();
-    } else {
-      this.logger.warn(
-        'Supabase Auth non configuré (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY manquants).',
-      );
+    if (!supabaseUrl || !serviceRoleKey) {
+      this.logger.error("Configuration Supabase manquante (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY).");
+      return;
     }
+
+    this.supabase = createClient(supabaseUrl, serviceRoleKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
+    this.logger.log('Connecté à Supabase Auth avec succès. Fin de la dépendance aux mots de passe locaux.');
   }
 
-  /**
-   * Vérifie et crée automatiquement l'unique compte administrateur dans Supabase Auth
-   */
-  private async ensureAdminUserExists() {
-    if (!this.supabase) return;
-
-    const adminEmail = process.env.ADMIN_EMAIL || 'admin@moncode.com';
-    const adminPassword = process.env.ADMIN_PASSWORD || 'MateoGRANDGenQR';
-
-    try {
-      const { data, error } = await this.supabase.auth.admin.listUsers();
-      if (error) {
-        this.logger.error(`Erreur listUsers Supabase: ${error.message}`);
-        return;
-      }
-
-      const existing = data.users.find((u) => u.email === adminEmail);
-
-      if (!existing) {
-        const previousAdmin = data.users.find(
-          (u) => u.user_metadata?.role === 'admin' || u.email === 'admin@genqr.com',
-        );
-
-        if (previousAdmin) {
-          await this.supabase.auth.admin.updateUserById(previousAdmin.id, {
-            email: adminEmail,
-            email_confirm: true,
-          });
-          this.logger.log(`Compte administrateur Supabase mis à jour (${previousAdmin.email} -> ${adminEmail})`);
-        } else {
-          const { error: createError } = await this.supabase.auth.admin.createUser({
-            email: adminEmail,
-            password: adminPassword,
-            email_confirm: true,
-            user_metadata: { role: 'admin' },
-          });
-
-          if (createError) {
-            this.logger.error(`Erreur création compte admin: ${createError.message}`);
-          } else {
-            this.logger.log(`Compte administrateur Supabase créé avec succès (${adminEmail})`);
-          }
-        }
-      } else {
-        this.logger.log(`Compte administrateur Supabase opérationnel (${adminEmail})`);
-      }
-    } catch (err: unknown) {
-      this.logger.error('Erreur lors de l’initialisation de l’administrateur:', err);
-    }
-  }
-
-  /**
-   * Authentification administrateur
-   */
-  async loginAdmin(password: string) {
-    if (!password) {
-      throw new BadRequestException('Le mot de passe est obligatoire');
-    }
-
+  async login(identifier: string, password: string): Promise<AuthResult> {
     if (!this.supabase) {
-      throw new BadRequestException('Supabase n’est pas configuré sur le serveur');
+      throw new UnauthorizedException('Service d\'authentification momentanément indisponible.');
     }
 
-    const adminEmail = process.env.ADMIN_EMAIL || 'admin@moncode.com';
+    const cleanId = (identifier || '').trim().toLowerCase();
+    const adminEmail = (process.env.ADMIN_EMAIL || 'admin@moncode.com').toLowerCase();
+    const userEmail = (process.env.USER_EMAIL || 'user@moncode.com').toLowerCase();
+
+    let targetEmail = cleanId;
+    let expectedRole: 'admin' | 'user' = 'user';
+
+    // Conservation du confort de frappe pour le frontend (alias "admin" ou "user")
+    if (!cleanId || cleanId === 'admin' || cleanId === adminEmail) {
+      targetEmail = adminEmail;
+      expectedRole = 'admin';
+    } else if (cleanId === 'user' || cleanId === 'restaurant' || cleanId === 'resto' || cleanId === userEmail) {
+      targetEmail = userEmail;
+      expectedRole = 'user';
+    }
 
     const { data, error } = await this.supabase.auth.signInWithPassword({
-      email: adminEmail,
+      email: targetEmail,
       password,
     });
 
     if (error || !data.session) {
-      throw new UnauthorizedException('Mot de passe administrateur incorrect');
+      throw new UnauthorizedException('Identifiant ou mot de passe incorrect');
     }
+
+    // Le rôle est récupéré des métadonnées de Supabase ou déduit de l'email
+    const role: 'admin' | 'user' = (data.user.user_metadata?.role as 'admin' | 'user') || expectedRole;
+    const redirect = role === 'admin' ? '/admin' : '/intervenant';
 
     return {
       access_token: data.session.access_token,
+      refresh_token: data.session.refresh_token,
       user: {
         id: data.user.id,
         email: data.user.email,
-        role: 'admin',
+        role,
+      },
+      redirect,
+    };
+  }
+
+  async loginAdmin(password: string): Promise<AuthResult> {
+    return this.login('admin', password);
+  }
+
+  async refresh(refreshToken: string): Promise<RefreshResult> {
+    if (!refreshToken) {
+      throw new BadRequestException('Le jeton de rafraîchissement est obligatoire');
+    }
+
+    if (!this.supabase) {
+      throw new UnauthorizedException('Service d\'authentification indisponible.');
+    }
+
+    const { data, error } = await this.supabase.auth.refreshSession({
+      refresh_token: refreshToken,
+    });
+
+    if (error || !data.session || !data.user) {
+      throw new UnauthorizedException('Jeton de rafraîchissement invalide ou expiré');
+    }
+
+    const adminEmail = (process.env.ADMIN_EMAIL || 'admin@moncode.com').toLowerCase();
+    const role: 'admin' | 'user' = (data.user.user_metadata?.role as 'admin' | 'user') || 
+      (data.user.email?.toLowerCase() === adminEmail ? 'admin' : 'user');
+
+    return {
+      access_token: data.session.access_token,
+      refresh_token: data.session.refresh_token,
+      user: {
+        id: data.user.id,
+        email: data.user.email,
+        role,
       },
     };
   }
 
-  /**
-   * Mise à jour des identifiants (email et/ou mot de passe)
-  /**
-   * Valide un jeton Bearer admin auprès de Supabase Auth
-   */
-  async validateAdminToken(token: string): Promise<boolean> {
-    if (!token) return false;
-    if (!this.supabase) return false;
+  async validateToken(token: string): Promise<{ valid: boolean; user?: AuthSessionUser }> {
+    if (!token || !this.supabase) return { valid: false };
 
     try {
       const { data, error } = await this.supabase.auth.getUser(token);
-      if (error || !data?.user) {
-        return false;
+      if (!error && data?.user) {
+        const adminEmail = (process.env.ADMIN_EMAIL || 'admin@moncode.com').toLowerCase();
+        const role: 'admin' | 'user' =
+          (data.user.user_metadata?.role as 'admin' | 'user') ||
+          (data.user.email?.toLowerCase() === adminEmail ? 'admin' : 'user');
+
+        return {
+          valid: true,
+          user: {
+            id: data.user.id,
+            email: data.user.email,
+            role,
+          },
+        };
       }
-      return true;
     } catch {
-      return false;
+      // ignore network err
     }
+    return { valid: false };
   }
 
-  /**
-   * Mise à jour des identifiants (email et/ou mot de passe)
-   */
+  async validateAdminToken(token: string): Promise<boolean> {
+    const { valid, user } = await this.validateToken(token);
+    return valid && user?.role === 'admin';
+  }
+
+  async validateUserToken(token: string): Promise<boolean> {
+    const { valid, user } = await this.validateToken(token);
+    return valid && (user?.role === 'user' || user?.role === 'admin');
+  }
+
   async updateCredentials(token: string, newEmail?: string, newPassword?: string) {
-    if (!this.supabase) {
-      throw new BadRequestException('Supabase n’est pas configuré');
-    }
-
-    if (!token) {
-      throw new UnauthorizedException('Jeton d’authentification manquant');
-    }
-
-    // 1. Validation du token de session auprès de Supabase
-    const { data: userData, error: userError } = await this.supabase.auth.getUser(token);
-    if (userError || !userData?.user) {
+    const { valid, user } = await this.validateToken(token);
+    if (!valid || !user) {
       throw new UnauthorizedException('Session expirée ou non autorisée');
     }
 
@@ -162,8 +178,11 @@ export class AuthService implements OnModuleInit {
       throw new BadRequestException('Veuillez fournir un nouvel email ou un nouveau mot de passe');
     }
 
-    // 2. Mise à jour dans Supabase Auth
-    const updatePayload: { email?: string; password?: string; email_confirm?: boolean } = {};
+    if (!this.supabase || !user.id) {
+      throw new BadRequestException('Service d\'authentification indisponible.');
+    }
+
+    const updatePayload: Record<string, unknown> = {};
     if (trimmedEmail) {
       updatePayload.email = trimmedEmail;
       updatePayload.email_confirm = true;
@@ -172,62 +191,23 @@ export class AuthService implements OnModuleInit {
       updatePayload.password = trimmedPassword;
     }
 
-    const { data: updatedUser, error: updateError } =
-      await this.supabase.auth.admin.updateUserById(userData.user.id, updatePayload);
+    const { error: updateError } = await this.supabase.auth.admin.updateUserById(
+      user.id,
+      updatePayload,
+    );
 
     if (updateError) {
-      throw new BadRequestException(`Erreur mise à jour Supabase: ${updateError.message}`);
-    }
-
-    // 3. Mise à jour en mémoire pour les connexions subséquentes
-    if (trimmedEmail) {
-      process.env.ADMIN_EMAIL = trimmedEmail;
-    }
-    if (trimmedPassword) {
-      process.env.ADMIN_PASSWORD = trimmedPassword;
-    }
-
-    // 4. Synchronisation facultative de secours sur disque (sans bloquer en cas de filesystem éphémère/read-only)
-    try {
-      const possiblePaths = [
-        path.join(process.cwd(), '.env'),
-        path.join(process.cwd(), 'apps/api/.env'),
-        path.join(__dirname, '../../.env'),
-      ];
-      const envPath = possiblePaths.find((p) => fs.existsSync(p));
-      if (envPath) {
-        let envContent = fs.readFileSync(envPath, 'utf8');
-
-        if (trimmedEmail) {
-          if (envContent.includes('ADMIN_EMAIL=')) {
-            envContent = envContent.replace(/ADMIN_EMAIL=.*/g, `ADMIN_EMAIL="${trimmedEmail}"`);
-          } else {
-            envContent += `\nADMIN_EMAIL="${trimmedEmail}"`;
-          }
-        }
-
-        if (trimmedPassword) {
-          if (envContent.includes('ADMIN_PASSWORD=')) {
-            envContent = envContent.replace(/ADMIN_PASSWORD=.*/g, `ADMIN_PASSWORD="${trimmedPassword}"`);
-          } else {
-            envContent += `\nADMIN_PASSWORD="${trimmedPassword}"`;
-          }
-        }
-
-        fs.writeFileSync(envPath, envContent, 'utf8');
-        this.logger.log('Fichier .env synchronisé avec les nouveaux identifiants');
-      }
-    } catch {
-      // Ignorer silencieusement si le conteneur est en lecture seule
+      this.logger.error(`Erreur Supabase: ${updateError.message}`, updateError.stack);
+      throw new BadRequestException('Impossible de mettre à jour les identifiants pour le moment.');
     }
 
     return {
       success: true,
-      message: 'Identifiants administrateur mis à jour avec succès',
+      message: 'Identifiants mis à jour avec succès dans Supabase.',
       user: {
-        id: updatedUser.user.id,
-        email: updatedUser.user.email,
-        role: 'admin',
+        id: user.id,
+        email: trimmedEmail || user.email,
+        role: user.role,
       },
     };
   }

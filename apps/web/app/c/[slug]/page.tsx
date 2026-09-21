@@ -5,7 +5,6 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 
 interface CardData {
-  id: string;
   slug: string;
   imageUrl: string;
   cardUrl: string;
@@ -168,41 +167,31 @@ export default function CardViewPage() {
       )}`
     : null;
 
-  // Écran de chargement
+  // Écran de chargement (Minimaliste & Anonyme)
   if (loading) {
     return (
-      <main className="landing-page scene-ready">
-        <div className="ambient ambient-one" />
-        <div className="ambient ambient-two" />
-        <header className="site-header">
-          <Link className="brand brand-small" href="/" aria-label="MonCode - accueil">
-            <span>Mon</span>Code
-          </Link>
-          <p className="header-note">Vos menus digitaux, en un scan.</p>
-        </header>
-
-        <section className="hero">
-          <div className="action-panel" style={{ opacity: 1, transform: "none", maxWidth: "680px" }}>
-            <p className="eyebrow">Chargement</p>
-            <h1 className="brand" style={{ fontSize: "clamp(28px, 4vw, 42px)", margin: "0 0 16px" }}>
-              Ouverture du <span>menu...</span>
-            </h1>
-            <div
-              style={{
-                minHeight: "220px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                background: "rgba(0,0,0,0.03)",
-                borderRadius: "20px",
-                margin: "24px 0",
-              }}
-            >
-              <span style={{ color: "var(--orange)", fontWeight: 700 }}>Chargement des données...</span>
-            </div>
-          </div>
-        </section>
-      </main>
+      <div style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        minHeight: "100vh",
+        background: "#f9fafb",
+        color: "#6b7280",
+        fontFamily: "sans-serif"
+      }}>
+        <div style={{
+          width: "40px",
+          height: "40px",
+          border: "4px solid rgba(0,0,0,0.1)",
+          borderTopColor: "#374151",
+          borderRadius: "50%",
+          animation: "spin 1s linear infinite",
+          marginBottom: "16px"
+        }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        <span style={{ fontSize: "16px", fontWeight: 500 }}>Chargement en cours...</span>
+      </div>
     );
   }
 
@@ -461,23 +450,7 @@ export default function CardViewPage() {
           )}
         </section>
 
-        {/* Pied de page discret */}
-        <footer
-          style={{
-            marginTop: "20px",
-            textAlign: "center",
-            fontSize: "12px",
-            color: "var(--theme-muted)",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: "6px",
-          }}
-        >
-          <p style={{ margin: 0 }}>
-            Propulsé par <Link href="/" style={{ color: "var(--theme-accent)", fontWeight: 700, textDecoration: "none" }}>MonCode</Link>
-          </p>
-        </footer>
+        {/* Pied de page retiré pour conserver l'anonymat de la marque */}
       </div>
 
       {/* LIGHTBOX MODAL */}

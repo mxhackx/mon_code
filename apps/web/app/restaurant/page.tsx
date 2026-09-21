@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, ChangeEvent, FormEvent, useRef } from "react";
+import { useState, ChangeEvent, FormEvent, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useFile } from "../context/FileContext";
@@ -13,7 +13,16 @@ export default function RestaurantPage() {
     setRestaurantLogo,
     addMenuFiles,
     removeMenuFile,
+    authToken,
+    isAuthLoading,
   } = useFile();
+
+  // Protection de la route : accès réservé aux utilisateurs connectés
+  useEffect(() => {
+    if (!isAuthLoading && !authToken) {
+      router.push("/connexion");
+    }
+  }, [authToken, isAuthLoading, router]);
 
   const [formError, setFormError] = useState<string | null>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
