@@ -1,11 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
+import AdminEditCardModal from "./AdminEditCardModal";
 
 export interface CardSummary {
   id: string;
   slug: string;
   imageUrl: string;
+  logoUrl?: string | null;
+  menuImages?: string[] | null;
   cardUrl: string;
   userName?: string | null;
   clientName?: string | null;
@@ -22,9 +26,12 @@ interface AdminCardsListProps {
   cards: CardSummary[];
   isLoading: boolean;
   onCreateFirstCard: () => void;
+  onCardUpdated?: (updatedCard: CardSummary) => void;
+  adminToken: string;
 }
 
-export default function AdminCardsList({ cards, isLoading, onCreateFirstCard }: AdminCardsListProps) {
+export default function AdminCardsList({ cards, isLoading, onCreateFirstCard, onCardUpdated, adminToken }: AdminCardsListProps) {
+  const [editingCard, setEditingCard] = useState<CardSummary | null>(null);
   if (isLoading) {
     return <p style={{ color: "#625852", padding: "30px 0" }}>Chargement des cartes...</p>;
   }
@@ -121,10 +128,36 @@ export default function AdminCardsList({ cards, isLoading, onCreateFirstCard }: 
             >
               Voir la carte
             </Link>
+            <button
+              type="button"
+              onClick={() => setEditingCard(card)}
+              className="cta-button secondary"
+              style={{
+                minHeight: "36px",
+                padding: "0 14px",
+                fontSize: "12px",
+                flex: 1,
+                background: "rgba(0,0,0,0.05)",
+                color: "var(--ink)"
+              }}
+            >
+              Éditer
+            </button>
           </div>
         </div>
       ))}
+
+      {editingCard && (
+        <AdminEditCardModal
+          card={editingCard}
+          adminToken={adminToken}
+          onClose={() => setEditingCard(null)}
+          onSuccess={(updatedCard) => {
+            setEditingCard(null);
+            if (onCardUpdated) onCardUpdated(updatedCard);
+          }}
+        />
+      )}
     </div>
   );
 }
-
