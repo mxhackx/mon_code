@@ -1,4 +1,5 @@
 "use client";
+import QRCodeStudio from "../components/QRCodeStudio";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -65,43 +66,6 @@ const THEMES = [
   },
 ];
 
-const QR_STYLES = [
-  {
-    id: "style-1",
-    name: "Classique Épuré",
-    desc: "Noir profond sur fond blanc immaculé",
-    previewColor: "#0f172a",
-    bgColor: "#ffffff",
-  },
-  {
-    id: "style-2",
-    name: "Chaleur Terracotta",
-    desc: "Orange terracotta chaleureux et moderne",
-    previewColor: "#c85a32",
-    bgColor: "#fdf9f4",
-  },
-  {
-    id: "style-3",
-    name: "Prestige Doré",
-    desc: "Or chaud subtil sur fond sombre luxueux",
-    previewColor: "#d4af37",
-    bgColor: "#1a1612",
-  },
-  {
-    id: "style-4",
-    name: "Moderne Ardoise",
-    desc: "Gris ardoise contemporain et doux",
-    previewColor: "#2d3748",
-    bgColor: "#f8fafc",
-  },
-  {
-    id: "style-5",
-    name: "Fraîcheur Émeraude",
-    desc: "Vert émeraude profond sur fond menthe",
-    previewColor: "#065f46",
-    bgColor: "#f0fdf4",
-  },
-];
 
 export default function PersonnalisationPage() {
   const router = useRouter();
@@ -145,7 +109,7 @@ export default function PersonnalisationPage() {
       formData.append("locationUrl", restaurantInfo.locationUrl);
       formData.append("phoneNumber", restaurantInfo.phoneNumber);
       formData.append("themeId", customization.themeId);
-      formData.append("qrStyle", customization.qrStyle);
+      if (customization.qrStyle) formData.append("qrStyle", customization.qrStyle);
 
       // Logo
       if (restaurantInfo.logoFile) {
@@ -380,75 +344,22 @@ export default function PersonnalisationPage() {
                 </div>
               </div>
 
-              {/* SECTION 2 : Les 5 Styles de QR Code */}
+              {/* SECTION 2 : Le Studio QR Code */}
               <div style={{ textAlign: "left", marginBottom: "32px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "14px" }}>
                   <span style={{ background: "var(--orange)", color: "#fff", width: "26px", height: "26px", borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: 700 }}>
                     2
                   </span>
                   <h2 style={{ fontSize: "18px", margin: 0, color: "var(--ink)" }}>
-                    Choisissez un style de QR Code (5 formats au choix)
+                    Designez le QR Code
                   </h2>
                 </div>
-
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "12px" }}>
-                  {QR_STYLES.map((style) => {
-                    const isSelected = customization.qrStyle === style.id;
-                    return (
-                      <div
-                        key={style.id}
-                        onClick={() => setQrStyle(style.id)}
-                        style={{
-                          background: "#ffffff",
-                          border: isSelected ? "3px solid var(--orange)" : "1.5px solid rgba(0,0,0,0.12)",
-                          borderRadius: "14px",
-                          padding: "14px",
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "12px",
-                          boxShadow: isSelected ? "0 8px 20px rgba(239, 106, 34, 0.18)" : "none",
-                          transform: isSelected ? "scale(1.02)" : "none",
-                          transition: "all 0.2s ease",
-                        }}
-                      >
-                        {/* Miniature représentative */}
-                        <div
-                          style={{
-                            width: "48px",
-                            height: "48px",
-                            background: style.bgColor,
-                            borderRadius: "8px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            border: "1px solid rgba(0,0,0,0.1)",
-                            flexShrink: 0,
-                          }}
-                        >
-                          <svg viewBox="0 0 24 24" width="28" height="28" fill={style.previewColor}>
-                            <path d="M4 4h6v6H4V4zm2 2v2h2V6H6zm8-2h6v6h-6V4zm2 2v2h2V6h-2zM4 14h6v6H4v-6zm2 2v2h2v-2H6zm10 0h2v2h-2v-2zm-2 2h2v2h-2v-2zm4 0h2v2h-2v-2zm-2-4h2v2h-2v-2zm4-2h2v2h-2v-2z" />
-                          </svg>
-                        </div>
-
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <strong style={{ fontSize: "13.5px", color: "var(--ink)", display: "block" }}>
-                            {style.name}
-                          </strong>
-                          <span style={{ fontSize: "11.5px", color: "#8a7a70" }}>
-                            {style.desc}
-                          </span>
-                        </div>
-
-                        {isSelected && (
-                          <span style={{ color: "var(--orange)", fontWeight: 700, fontSize: "16px" }}>
-                            ✓
-                          </span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                
+                <QRCodeStudio 
+                  dataUrl="https://visicard.moncode.com/c/APERÇU"
+                  logoUrl={restaurantInfo.logoFile ? URL.createObjectURL(restaurantInfo.logoFile) : undefined}
+                  onChange={(configStr: string) => setQrStyle(configStr)}
+                />
               </div>
 
               {error && (
