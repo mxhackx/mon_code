@@ -3,6 +3,9 @@
 import { useState, ChangeEvent, FormEvent, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import dynamic from "next/dynamic";
+
+const LocationPicker = dynamic(() => import("../components/LocationPicker"), { ssr: false, loading: () => <div style={{height: "300px", background: "#f8f9fb", borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "center", color: "#697382", border: "1.5px solid #E5E9EF"}}>Chargement de la carte...</div> });
 import { useFile } from "../context/FileContext";
 
 export default function RestaurantPage() {
@@ -74,12 +77,7 @@ export default function RestaurantPage() {
 
     const trimmedLocation = restaurantInfo.locationUrl.trim();
     if (!trimmedLocation) {
-      setFormError("Veuillez renseigner le lien de localisation Google Maps.");
-      return;
-    }
-
-    if (!trimmedLocation.startsWith("http://") && !trimmedLocation.startsWith("https://")) {
-      setFormError("Le lien de localisation doit être une URL valide (ex: https://maps.app.goo.gl/...).");
+      setFormError("Veuillez définir l'emplacement sur la carte.");
       return;
     }
 

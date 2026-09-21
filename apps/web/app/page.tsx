@@ -585,7 +585,7 @@ export default function HomePage() {
             </Link>
 
             <PremiumButton
-              href="/carte-visite"
+              href="/intervenant"
               variant="blue"
               icon={ArrowRight}
             >
@@ -744,7 +744,7 @@ export default function HomePage() {
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
 
               <PremiumButton
-                href="/carte-visite"
+                href="/intervenant"
                 variant="blue"
                 icon={ArrowRight}
               >
@@ -1197,7 +1197,7 @@ export default function HomePage() {
 
             <div className="mt-10 flex justify-center">
               <PremiumButton
-                href="/carte-visite"
+                href="/intervenant"
                 variant="blue"
                 icon={ArrowRight}
               >

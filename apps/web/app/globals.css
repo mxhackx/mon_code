@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "daisyui";
 
 :root { --cream: #fff3e3; --ink: #181411; --orange: #ef6a22; --orange-dark: #cf4f10; }
 * { box-sizing: border-box; }
@@ -591,3 +592,20 @@ button, a { font: inherit; }
   }
 }
 
+
+/* DaisyUI Theme Mapper */
+.daisy-theme-wrapper {
+  --theme-bg: oklch(var(--b1));
+  --theme-text: oklch(var(--bc));
+  --theme-card-bg: oklch(var(--b2, var(--b1)));
+  --theme-accent: oklch(var(--p));
+  --theme-border: oklch(var(--b3, var(--b2)));
+  --theme-muted: oklch(var(--bc) / 0.6);
+  --theme-surface: oklch(var(--p) / 0.1);
+  --theme-badge-bg: oklch(var(--p) / 0.15);
+  --theme-badge-text: oklch(var(--p));
+  --theme-badge-border: oklch(var(--p) / 0.3);
+  --theme-glow: oklch(var(--p) / 0.15);
+  --theme-font: inherit;
+  background-color: var(--theme-bg);
+}
