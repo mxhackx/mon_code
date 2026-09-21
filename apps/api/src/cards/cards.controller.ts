@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Param,
   Body,
   Res,
@@ -17,6 +18,19 @@ import type { Request, Response } from 'express';
 import 'multer';
 import { CardsService } from './cards.service';
 import { AuthService } from '../auth/auth.service';
+
+
+export class UpdateCardDto {
+  userName?: string;
+  clientName?: string;
+  workDone?: string;
+  amountReceived?: string;
+  restaurantName?: string;
+  locationUrl?: string;
+  phoneNumber?: string;
+  themeId?: string;
+  qrStyle?: string;
+}
 
 export class CreateCardDto {
   userName?: string;
@@ -159,6 +173,45 @@ export class CardsController {
     }
 
     return this.cardsService.getAllCards();
+  }
+
+
+  @Patch(':slug')
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      { name: 'file', maxCount: 1 },
+      { name: 'logo', maxCount: 1 },
+      { name: 'menu', maxCount: 10 },
+    ], {
+      limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
+      fileFilter: (req: any, file: Express.Multer.File, callback: (error: Error | null, acceptFile: boolean) => void) => {
+        if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/)) {
+          return callback(new BadRequestException('Seules les images sont autorisées'), false);
+        }
+        callback(null, true);
+      },
+    }),
+  )
+  async updateCard(
+    @Req() req: Request,
+    @Headers('authorization') authHeader: string | undefined,
+    @Param('slug') slug: string,
+    @UploadedFiles() files: { file?: Express.Multer.File[]; logo?: Express.Multer.File[]; menu?: Express.Multer.File[]; },
+    @Body() body: UpdateCardDto,
+  ) {
+    let token = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
+    if (!token && (req as any).cookies) {
+      token = (req as any).cookies['access_token'];
+    }
+    if (!token) {
+      throw new UnauthorizedException('Accès réservé aux administrateurs. Token d’authentification manquant.');
+    }
+    const isValid = await this.authService.validateAdminToken(token);
+    if (!isValid) {
+      throw new UnauthorizedException('Session administrateur expirée ou invalide');
+    }
+
+    return this.cardsService.updateCardBySlug(slug, body, files);
   }
 
   @Get(':slug/download')

@@ -384,4 +384,86 @@ export class CardsService {
 
     throw new NotFoundException(`Le fichier image pour la carte "${slug}" est introuvable`);
   }
+
+  async updateCardBySlug(slug: string, updateData: any, files?: { file?: Express.Multer.File[]; logo?: Express.Multer.File[]; menu?: Express.Multer.File[]; }) {
+    const existing = await this.prisma.card.findUnique({ where: { slug } });
+    if (!existing) {
+      throw new NotFoundException(`La carte "${slug}" n'existe pas`);
+    }
+
+    if (this.supabase) {
+      const getSafeExt = (mimetype: string) => mimetype.split('/')[1]?.replace('jpeg', 'jpg') || 'png';
+      const deleteOldFile = async (oldUrl: string | null) => {
+        if (oldUrl && oldUrl.includes('supabase.co')) {
+          const path = oldUrl.split('/images/')[1];
+          if (path) {
+            await this.supabase!.storage.from('images').remove([path]).catch(() => {});
+          }
+        }
+      };
+
+      if (files?.file && files.file.length > 0) {
+        const file = files.file[0];
+        await deleteOldFile(existing.imageUrl);
+        const fileName = `card-${Date.now()}-${Math.random().toString(36).substring(7)}.${getSafeExt(file.mimetype)}`;
+        const { data, error } = await this.supabase.storage.from('images').upload(fileName, file.buffer, { contentType: file.mimetype });
+        if (!error && data) updateData.imageUrl = this.supabase.storage.from('images').getPublicUrl(data.path).data.publicUrl;
+      }
+
+      if (files?.logo && files.logo.length > 0) {
+        const logo = files.logo[0];
+        await deleteOldFile(existing.logoUrl);
+        const logoName = `logo-${Date.now()}-${Math.random().toString(36).substring(7)}.${getSafeExt(logo.mimetype)}`;
+        const { data, error } = await this.supabase.storage.from('images').upload(logoName, logo.buffer, { contentType: logo.mimetype });
+        if (!error && data) updateData.logoUrl = this.supabase.storage.from('images').getPublicUrl(data.path).data.publicUrl;
+      }
+
+      let finalMenuImages: string[] = [];
+      let keptUrls: string[] = [];
+
+      if (updateData.existingMenuUrls !== undefined) {
+        try {
+          keptUrls = typeof updateData.existingMenuUrls === 'string' 
+            ? JSON.parse(updateData.existingMenuUrls) 
+            : updateData.existingMenuUrls;
+        } catch (e) {
+          keptUrls = [];
+        }
+      } else {
+        keptUrls = (existing.menuImages as unknown as string[]) || [];
+      }
+      
+      delete updateData.existingMenuUrls;
+
+      if (existing.menuImages && Array.isArray(existing.menuImages)) {
+        const toDelete = (existing.menuImages as unknown as string[]).filter(url => !keptUrls.includes(url));
+        if (toDelete.length > 0) {
+          await Promise.all(toDelete.map(url => deleteOldFile(url)));
+        }
+      }
+      
+      finalMenuImages = [...keptUrls];
+
+      if (files?.menu && files.menu.length > 0) {
+        const uploadPromises = files.menu.map(async (menuFile) => {
+          const menuName = `menu-${Date.now()}-${Math.random().toString(36).substring(7)}.${getSafeExt(menuFile.mimetype)}`;
+          const { data, error } = await this.supabase!.storage.from('images').upload(menuName, menuFile.buffer, { contentType: menuFile.mimetype });
+          if (!error && data) return this.supabase!.storage.from('images').getPublicUrl(data.path).data.publicUrl;
+          return null;
+        });
+
+        const results = await Promise.all(uploadPromises);
+        finalMenuImages.push(...(results.filter(url => url !== null) as string[]));
+      }
+
+      updateData.menuImages = finalMenuImages;
+    }
+
+    const updatedCard = await this.prisma.card.update({
+      where: { slug },
+      data: updateData,
+    });
+
+    return updatedCard;
+  }
 }

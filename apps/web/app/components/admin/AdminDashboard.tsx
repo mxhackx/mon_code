@@ -80,6 +80,10 @@ export default function AdminDashboard({ adminToken, onLogout, onNavigateToUser 
     };
   }, [adminToken, onLogout, refreshAccessToken]);
 
+  const handleCardUpdated = (updatedCard: CardSummary) => {
+    setCardsList(prev => prev.map(c => c.id === updatedCard.id ? updatedCard : c));
+  };
+
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px", marginBottom: "16px" }}>
@@ -151,6 +155,8 @@ export default function AdminDashboard({ adminToken, onLogout, onNavigateToUser 
           cards={cardsList}
           isLoading={isLoadingCards}
           onCreateFirstCard={onNavigateToUser}
+          onCardUpdated={handleCardUpdated}
+          adminToken={adminToken}
         />
       ) : (
         <AdminSettingsForm adminToken={adminToken} />
