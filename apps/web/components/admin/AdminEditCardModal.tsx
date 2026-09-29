@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { CardSummary } from "./AdminCardsList";
-import { useFile } from "../../context/FileContext";
+import { useFile } from "../../app/context/FileContext";
 
 interface AdminEditCardModalProps {
   card: CardSummary;

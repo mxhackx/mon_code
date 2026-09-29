@@ -1,7 +1,6 @@
 "use client";
-import RestaurantCardLayout from "../../components/RestaurantCardLayout";
-
-import { useEffect, useState, useCallback } from "react";
+import RestaurantCardLayout from "../../../components/RestaurantCardLayout";
+import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 
@@ -10,34 +9,31 @@ interface CardData {
   imageUrl: string;
   cardUrl: string;
   restaurantName?: string | null;
+  address?: string | null;
   logoUrl?: string | null;
   locationUrl?: string | null;
   phoneNumber?: string | null;
   menuImages?: string[];
+  placeImages?: string[];
+  facebookUrl?: string | null;
+  instagramUrl?: string | null;
+  xUrl?: string | null;
+  snapchatUrl?: string | null;
+  additionalInfo?: string | null;
+  schedule?: any;
   themeId?: string | null;
+  cardLayout?: string | null;
   qrStyle?: string | null;
   createdAt: string;
 }
 
-const THEME_INFO: Record<string, { label: string; className: string }> = {
-  "theme-1": { label: "Élégant & Or", className: "restaurant-theme-1" },
-  "theme-2": { label: "Bistrot Chaleureux", className: "restaurant-theme-2" },
-  "theme-3": { label: "Minimaliste & Épuré", className: "restaurant-theme-3" },
-  "theme-4": { label: "Gourmet & Botanique", className: "restaurant-theme-4" },
-  "theme-5": { label: "Vibrant & Street Food", className: "restaurant-theme-5" },
-};
-
 export default function CardViewPage() {
   const params = useParams();
   const slug = params?.slug as string;
-
+  
   const [card, setCard] = useState<CardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Lightbox state for menu images
-  const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   useEffect(() => {
     if (!slug) return;
@@ -58,7 +54,8 @@ export default function CardViewPage() {
           setLoading(false);
         }
       })
-      .catch((err: Error) => {
+      .catch((err) => {
+        console.error("Erreur de récupération de la carte :", err);
         if (isMounted) {
           setError(err.message);
           setLoading(false);
@@ -70,151 +67,63 @@ export default function CardViewPage() {
     };
   }, [slug]);
 
-  const menuImages = card?.menuImages && card.menuImages.length > 0 ? card.menuImages : [];
-
-  const handleOpenLightbox = (index: number) => {
-    setActiveImageIndex(index);
-    setLightboxOpen(true);
-  };
-
-  const handleCloseLightbox = () => {
-    setLightboxOpen(false);
-  };
-
-  const handlePrevImage = useCallback(() => {
-    setActiveImageIndex((prev) => (prev > 0 ? prev - 1 : menuImages.length - 1));
-  }, [menuImages.length]);
-
-  const handleNextImage = useCallback(() => {
-    setActiveImageIndex((prev) => (prev < menuImages.length - 1 ? prev + 1 : 0));
-  }, [menuImages.length]);
-
-  // Clavier pour la lightbox (Echap, flèches gauche/droite)
-  useEffect(() => {
-    if (!lightboxOpen) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setLightboxOpen(false);
-      } else if (e.key === "ArrowLeft") {
-        handlePrevImage();
-      } else if (e.key === "ArrowRight") {
-        handleNextImage();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [lightboxOpen, handlePrevImage, handleNextImage]);
-
-  // Déterminer la classe du thème
-  const isCustomTheme = card?.themeId && card.themeId.startsWith("theme-");
-  const themeClass = isCustomTheme ? `restaurant-${card.themeId}` : "daisy-theme-wrapper";
-  const dataTheme = !isCustomTheme ? card?.themeId : undefined;
-
-  const themeLabel = card?.themeId && THEME_INFO[card.themeId]
-    ? THEME_INFO[card.themeId].label
-    : "Menu Digital";
-
-  // Validation de sécurité pour les URL externes (protection anti-XSS contre javascript:)
-  const safeLocationUrl = (() => {
-    if (!card?.locationUrl) return null;
-    const trimmed = card.locationUrl.trim();
-    if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
-      return trimmed;
-    }
-    return null;
-  })();
-
-  // URL WhatsApp personnalisée (avec normalisation pour wa.me)
-  const cleanPhone = (() => {
-    if (!card?.phoneNumber) return null;
-    let digits = card.phoneNumber.replace(/[^0-9]/g, "");
-    if (digits.startsWith("00")) {
-      digits = digits.substring(2);
-    }
-    return digits.length >= 8 ? digits : null;
-  })();
-
-  const whatsappUrl = cleanPhone
-    ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
-        `Bonjour ${card?.restaurantName || ""}, je vous contacte suite à la consultation de votre menu en ligne.`
-      )}`
-    : null;
-
-  // Écran de chargement (Minimaliste & Anonyme)
   if (loading) {
     return (
-      <div style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        minHeight: "100vh",
-        background: "#f9fafb",
-        color: "#6b7280",
-        fontFamily: "sans-serif"
-      }}>
-        <div style={{
-          width: "40px",
-          height: "40px",
-          border: "4px solid rgba(0,0,0,0.1)",
-          borderTopColor: "#374151",
-          borderRadius: "50%",
-          animation: "spin 1s linear infinite",
-          marginBottom: "16px"
-        }} />
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-        <span style={{ fontSize: "16px", fontWeight: 500 }}>Chargement en cours...</span>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 font-sans">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <p className="text-slate-500 font-medium">Chargement du menu...</p>
+        </div>
       </div>
     );
   }
 
-  // Écran d'erreur
   if (error || !card) {
     return (
-      <main className="landing-page scene-ready">
-        <div className="ambient ambient-one" />
-        <div className="ambient ambient-two" />
-        <header className="site-header">
-          <Link className="brand brand-small" href="/" aria-label="MonCode - accueil">
-            <span>Mon</span>Code
-          </Link>
-          <p className="header-note">Vos menus digitaux, en un scan.</p>
-        </header>
-
-        <section className="hero">
-          <div className="action-panel" style={{ opacity: 1, transform: "none", maxWidth: "580px" }}>
-            <p className="eyebrow">Introuvable</p>
-            <h1 className="brand" style={{ fontSize: "clamp(28px, 4vw, 42px)", margin: "0 0 16px" }}>
-              Menu <span>non trouvé</span>
-            </h1>
-            <p className="hero-description" style={{ margin: "0 auto 28px" }}>
-              {error || "Ce menu n'existe pas ou a été désactivé."}
-            </p>
-            <div className="action-buttons">
-              <Link href="/" className="cta-button">
-                Créer un menu avec MonCode
-              </Link>
-            </div>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 font-sans p-6 text-center">
+        <div className="max-w-md w-full bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
+          <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+            😕
           </div>
-        </section>
-      </main>
+          <h1 className="text-2xl font-bold text-slate-900 mb-2">Oops !</h1>
+          <p className="text-slate-500 mb-6">{error || "Carte introuvable."}</p>
+          <Link href="/" className="inline-block bg-blue-600 text-white font-semibold px-6 py-3 rounded-full hover:bg-blue-700 transition-colors">
+            Créer ma carte Visicard
+          </Link>
+        </div>
+      </div>
     );
   }
 
-  // VUE DU RESTAURANT SELON LE THÈME CHOISI
+  const cleanPhone = card.phoneNumber ? card.phoneNumber.replace(/\D/g, '') : null;
+  const safeLocationUrl = card.locationUrl && (card.locationUrl.startsWith("http://") || card.locationUrl.startsWith("https://"))
+    ? card.locationUrl
+    : card.locationUrl 
+      ? `https://${card.locationUrl}`
+      : null;
+
+  const themeClass = `restaurant-${card.themeId || "theme-1"}`;
+
   return (
-    <main className={`menu-view-root ${themeClass} p-0 overflow-hidden`} data-theme={dataTheme} style={{ minHeight: "100svh" }}>
-      <RestaurantCardLayout 
-        restaurantName={card.restaurantName || ""}
-        logoUrl={card.logoUrl || undefined}
-        locationUrl={safeLocationUrl || undefined}
-        phoneNumber={cleanPhone || undefined}
-        menuImages={card.menuImages || []}
-      />
-    </main>
+    <div className={`min-h-screen w-full bg-slate-100 flex items-center justify-center font-sans ${themeClass}`}>
+      <main className="w-full sm:max-w-[420px] min-h-screen sm:min-h-[100dvh] relative bg-white sm:shadow-2xl sm:border-x border-slate-200 overflow-x-hidden" style={{ backgroundColor: "var(--theme-bg)" }}>
+        <RestaurantCardLayout 
+          restaurantName={card.restaurantName || ""}
+          address={card.address || undefined}
+          logoUrl={card.logoUrl || undefined}
+          locationUrl={safeLocationUrl || undefined}
+          phoneNumber={cleanPhone || undefined}
+          facebookUrl={card.facebookUrl || undefined}
+          instagramUrl={card.instagramUrl || undefined}
+          xUrl={card.xUrl || undefined}
+          snapchatUrl={card.snapchatUrl || undefined}
+          additionalInfo={card.additionalInfo || undefined}
+          schedule={card.schedule}
+          menuImages={card.menuImages || []}
+          placeImages={card.placeImages || []}
+          layout={card.cardLayout || "classic"}
+        />
+      </main>
+    </div>
   );
 }
-
-

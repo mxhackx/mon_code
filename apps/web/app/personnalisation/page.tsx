@@ -1,120 +1,216 @@
 "use client";
+
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useFile } from "../context/FileContext";
-import RestaurantCardLayout from "../components/RestaurantCardLayout";
+import RestaurantCardLayout from "../../components/RestaurantCardLayout";
+import { ArrowLeft, ArrowRight, Palette, Smartphone, Sparkles, Check, LayoutTemplate, Map, Minimize, Diamond } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+
+const LAYOUT_OPTIONS = [
+  { id: "classic", name: "Classique", icon: <LayoutTemplate size={20} />, desc: "La structure standard" },
+  { id: "maps", name: "Style Maps", icon: <Map size={20} />, desc: "Focus visuel et actions" },
+  { id: "minimal", name: "Minimaliste", icon: <Minimize size={20} />, desc: "Le menu avant tout" },
+  { id: "premium", name: "Avant-Garde", icon: <Diamond size={20} />, desc: "Design sophistiqué" }
+];
 
 const THEMES = [
-  { id: "theme-1", name: "premier", subtitle: "Dark Luxury", desc: "Noir profond et touches or champagne.", bgPreview: "#0d0b09", accentColor: "#d4af37", textColor: "#fdf8e2", badge: "Gastronomique" },
-  { id: "theme-2", name: "deuxième", subtitle: "Terracotta & Bois", desc: "Ambiance bistrot convivial.", bgPreview: "#fcf8f2", accentColor: "#c85a32", textColor: "#321d14", badge: "Convivial" },
-  { id: "theme-3", name: "troisième", subtitle: "Minimaliste & Clair", desc: "Épuré, blanc et sable.", bgPreview: "#ffffff", accentColor: "#827a72", textColor: "#2d2a28", badge: "Moderne" },
-  { id: "theme-4", name: "quatrième", subtitle: "Botanique & Gourmet", desc: "Vert émeraude profond.", bgPreview: "#f2f7f4", accentColor: "#2c5f43", textColor: "#193626", badge: "Nature" },
-  { id: "theme-5", name: "cinquième", subtitle: "Street Food", desc: "Foncé avec des touches oranges fluo.", bgPreview: "#13100e", accentColor: "#ef6a22", textColor: "#fff5ec", badge: "Vibrant" },
-  { id: "retro", name: "Retro", subtitle: "Vintage", desc: "Un look chaleureux, old-school.", bgPreview: "#e4d8b4", accentColor: "#ef9995", textColor: "#282425", badge: "Classique" },
-  { id: "cyberpunk", name: "Cyberpunk", subtitle: "Futuriste", desc: "Jaune éclatant, contrastes forts.", bgPreview: "#ffe600", accentColor: "#ff7598", textColor: "#000000", badge: "Audacieux" },
-  { id: "cupcake", name: "Cupcake", subtitle: "Douceur", desc: "Tons pastel, rose et bleu clair.", bgPreview: "#faf7f5", accentColor: "#65c3c8", textColor: "#291334", badge: "Doux" },
-  { id: "dracula", name: "Dracula", subtitle: "Sombre", desc: "Mode sombre avec violets et roses.", bgPreview: "#282a36", accentColor: "#ff79c6", textColor: "#f8f8f2", badge: "Moderne" },
-  { id: "luxury", name: "Luxury", subtitle: "Premium", desc: "Noir et or absolu pour un rendu haut de gamme.", bgPreview: "#09090b", accentColor: "#cca53f", textColor: "#dca54c", badge: "Élégant" },
-  { id: "valentine", name: "Valentine", subtitle: "Romantique", desc: "Nuances de rose et rouge.", bgPreview: "#f0d6e8", accentColor: "#e96d7b", textColor: "#632c3b", badge: "Passion" },
-  { id: "aqua", name: "Aqua", subtitle: "Océan", desc: "Des bleus profonds et vifs.", bgPreview: "#345da7", accentColor: "#09ecf3", textColor: "#c8e1e7", badge: "Frais" },
-  { id: "emerald", name: "Emerald", subtitle: "Nature", desc: "Blanc pur et vert émeraude percutant.", bgPreview: "#ffffff", accentColor: "#66cc8a", textColor: "#333c4d", badge: "Épuré" },
-  { id: "synthwave", name: "Synthwave", subtitle: "Années 80", desc: "Lueurs néons sur fond nuit noire.", bgPreview: "#2d1b69", accentColor: "#e779c1", textColor: "#f9f8fd", badge: "Néon" },
-  { id: "coffee", name: "Coffee", subtitle: "Café", desc: "Nuances de marron profond.", bgPreview: "#20161f", accentColor: "#db924b", textColor: "#c59f60", badge: "Chaud" },
+  { id: "theme-1", name: "Gastronomique", subtitle: "Dark Luxury", desc: "Noir profond et touches or champagne.", bgPreview: "#0d0b09", accentColor: "#d4af37", textColor: "#fdf8e2" },
+  { id: "theme-2", name: "Bistrot", subtitle: "Terracotta & Bois", desc: "Ambiance chaleureuse et conviviale.", bgPreview: "#fcf8f2", accentColor: "#c85a32", textColor: "#321d14" },
+  { id: "theme-3", name: "Moderne", subtitle: "Minimaliste", desc: "Design épuré, blanc et teintes sable.", bgPreview: "#ffffff", accentColor: "#827a72", textColor: "#2d2a28" },
+  { id: "theme-4", name: "Végétal", subtitle: "Botanique", desc: "Vert émeraude profond et tons nature.", bgPreview: "#f2f7f4", accentColor: "#2c5f43", textColor: "#193626" },
+  { id: "theme-5", name: "Vibrant", subtitle: "Street Food", desc: "Foncé avec des touches oranges fluo.", bgPreview: "#13100e", accentColor: "#ef6a22", textColor: "#fff5ec" },
+  { id: "theme-6", name: "Cyber", subtitle: "Néon & Futur", desc: "Noir total avec des accents cyan brillants.", bgPreview: "#000000", accentColor: "#00ffcc", textColor: "#ffffff" },
+  { id: "theme-7", name: "Océan", subtitle: "Fraîcheur Marine", desc: "Bleus apaisants et fond azur clair.", bgPreview: "#f0f8ff", accentColor: "#0066cc", textColor: "#003366" },
+  { id: "theme-8", name: "Élégance", subtitle: "Rose Poudré", desc: "Tons doux, rose pâle et accents cuivrés.", bgPreview: "#fff5f5", accentColor: "#d4a373", textColor: "#4a3030" },
+  { id: "theme-9", name: "Torréfié", subtitle: "Chaud & Corsé", desc: "Nuances de café intense et jaune ambré.", bgPreview: "#3e2723", accentColor: "#ffb300", textColor: "#efebe9" },
+  { id: "theme-10", name: "Crépuscule", subtitle: "Mystique", desc: "Fond violet sombre et accents lilas.", bgPreview: "#282a36", accentColor: "#bd93f9", textColor: "#f8f8f2" },
 ];
 
 export default function PersonnalisationPage() {
   const router = useRouter();
-  const { restaurantInfo, customization, setThemeId, authToken, isAuthLoading } = useFile();
+  const { restaurantInfo, customization, setThemeId, setCardLayout, authToken, isAuthLoading } = useFile();
 
   useEffect(() => {
     if (!isAuthLoading && !authToken) router.push("/connexion");
   }, [authToken, isAuthLoading, router]);
 
-  if (isAuthLoading) return null;
+  if (isAuthLoading) {
+    return (
+      <main className="min-h-screen bg-slate-50 flex items-center justify-center text-slate-500 text-sm">
+        <div className="flex items-center gap-3">
+          <div className="w-5 h-5 rounded-full border-2 border-slate-200 border-t-blue-600 animate-spin" />
+          <span>Chargement...</span>
+        </div>
+      </main>
+    );
+  }
 
-  // Préparation des données factices ou réelles pour le preview
   const previewLogo = restaurantInfo.logoFile ? URL.createObjectURL(restaurantInfo.logoFile) : undefined;
+  const previewPlaces = restaurantInfo.placeFiles.length > 0 ? restaurantInfo.placeFiles.map(f => URL.createObjectURL(f)) : [];
   const previewMenus = restaurantInfo.menuFiles.length > 0 
     ? restaurantInfo.menuFiles.map(f => URL.createObjectURL(f))
     : [];
 
-  const isCustomTheme = customization.themeId.startsWith("theme-");
-  const themeClass = isCustomTheme ? `restaurant-${customization.themeId}` : "daisy-theme-wrapper";
-  const dataTheme = !isCustomTheme ? customization.themeId : undefined;
+  const themeClass = `restaurant-${customization.themeId}`;
 
   return (
-    <main className="landing-page scene-ready" style={{ padding: "0" }}>
-      <div className="splash"></div>
-      
-      <header className="site-header" style={{ padding: "20px 40px", maxWidth: "1400px", width: "100%" }}>
-        <Link href="/" className="logo">Visicard <span>PRO</span></Link>
-        <div style={{ display: "flex", gap: "12px" }}>
-          <button onClick={() => router.push("/restaurant")} style={{ background: "none", border: "1px solid #ccc", padding: "8px 16px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}>Retour</button>
-          <button onClick={() => router.push("/qr-studio")} style={{ background: "var(--orange)", color: "#fff", border: "none", padding: "8px 16px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}>Suivant : Studio QR →</button>
+    <main className="min-h-screen bg-slate-50/50 flex flex-col font-sans">
+      {/* HEADER */}
+      <header className="w-full h-16 border-b bg-white flex items-center justify-between px-6 lg:px-12 sticky top-0 z-20">
+        <Link href="/" className="flex items-center gap-2.5 group">
+          <div className="grid grid-cols-2 gap-0.5 w-5 h-5 text-blue-600">
+            <img src="/logo.svg" alt="MonCode Logo" className="h-6 w-6" />
+          </div>
+          <span className="font-bold text-xl tracking-tight text-slate-900 group-hover:text-blue-600 transition-colors">MonCode</span>
+        </Link>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" size="sm" onClick={() => router.push("/restaurant")} className="gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Retour
+          </Button>
+          <Button size="sm" onClick={() => router.push("/qr-studio")} className="gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-none">
+            Suivant : Studio QR
+            <ArrowRight className="h-4 w-4" />
+          </Button>
         </div>
       </header>
 
-      <div style={{ display: "flex", flexWrap: "wrap", width: "100%", maxWidth: "1400px", margin: "0 auto", flex: 1, zIndex: 10, position: "relative" }}>
+      {/* CONTENT */}
+      <div className="flex-1 flex flex-col lg:flex-row w-full max-w-[1600px] mx-auto lg:overflow-hidden">
         
-        {/* Colonne Gauche : Sélection des thèmes */}
-        <div style={{ flex: "1 1 600px", padding: "20px 40px", overflowY: "auto", maxHeight: "calc(100vh - 80px)" }}>
-          <h1 className="brand" style={{ fontSize: "32px", marginBottom: "8px" }}>Choisissez l'interface</h1>
-          <p style={{ color: "#666", marginBottom: "32px" }}>Sélectionnez l'apparence de la page digitale de votre restaurant.</p>
+        {/* LEFT COLUMN: Controls */}
+        <div className="w-full lg:w-[55%] xl:w-[60%] flex flex-col p-5 lg:p-8 lg:overflow-y-auto lg:max-h-[calc(100vh-64px)]">
+          <div className="mb-10 max-w-2xl">
+            <div className="inline-flex items-center gap-2 text-blue-600 text-xs font-bold uppercase tracking-wider mb-4">
+              <span className="w-6 h-px bg-blue-600" />
+              Étape 3 sur 3
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 mb-4 flex items-center gap-3">
+              <Palette className="h-8 w-8 text-blue-600" />
+              Personnalisation
+            </h1>
+            <p className="text-slate-500 text-base leading-relaxed">
+              Choisissez le thème visuel qui correspond le mieux à l'identité de votre établissement. Le rendu final s'affiche en temps réel sur l'écran à droite.
+            </p>
+          </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px" }}>
+          
+          {/* LAYOUT SECTION */}
+          <div className="mb-8 max-w-3xl">
+            <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+              <span className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm font-bold">1</span>
+              Disposition de la carte
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {LAYOUT_OPTIONS.map((layout) => (
+                <button
+                  key={layout.id}
+                  onClick={() => setCardLayout && setCardLayout(layout.id)}
+                  className={`flex flex-col items-center justify-center gap-2 p-3 aspect-square rounded-xl border-2 transition-all text-center ${
+                    customization.cardLayout === layout.id 
+                      ? 'border-blue-600 bg-blue-50/50 shadow-md shadow-blue-100 scale-[1.02]' 
+                      : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
+                  }`}
+                >
+                  <div className={`p-2.5 rounded-full ${customization.cardLayout === layout.id ? "bg-blue-600 text-white shadow-sm" : "bg-slate-100 text-slate-500"}`}>
+                    {layout.icon}
+                  </div>
+                  <div className={`font-bold text-xs leading-tight ${customization.cardLayout === layout.id ? 'text-blue-700' : 'text-slate-700'}`}>
+                    {layout.name}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2 mt-8">
+            <span className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm font-bold">2</span>
+            Thème Visuel (Couleurs)
+          </h2>
+
+          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3 max-w-3xl pb-10">
             {THEMES.map((theme) => {
               const isSelected = customization.themeId === theme.id;
               return (
-                <div
+                <button
                   key={theme.id}
                   onClick={() => setThemeId(theme.id)}
-                  style={{
-                    background: theme.bgPreview,
-                    color: theme.textColor,
-                    border: isSelected ? "3px solid var(--orange)" : "1px solid rgba(0,0,0,0.1)",
-                    borderRadius: "16px",
-                    padding: "16px",
-                    cursor: "pointer",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "8px",
-                    boxShadow: isSelected ? "0 8px 24px rgba(239, 106, 34, 0.22)" : "0 2px 8px rgba(0,0,0,0.05)",
-                    transform: isSelected ? "scale(1.02)" : "none",
-                    transition: "all 0.2s ease",
-                    position: "relative",
-                  }}
+                  className={`group cursor-pointer rounded-xl border-2 transition-all duration-200 overflow-hidden flex flex-col items-center justify-center aspect-square relative ${
+                    isSelected 
+                      ? 'border-blue-600 shadow-md shadow-blue-100/50 scale-[1.05] z-10' 
+                      : 'border-slate-200 hover:border-slate-300 hover:shadow-sm hover:scale-[1.02]'
+                  }`}
+                  style={{ backgroundColor: theme.bgPreview }}
                 >
                   {isSelected && (
-                    <span style={{ position: "absolute", top: "10px", right: "10px", background: "var(--orange)", color: "#fff", borderRadius: "50%", width: "20px", height: "20px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: 700 }}>✓</span>
+                    <div className="absolute top-1.5 right-1.5 bg-blue-600 rounded-full p-0.5 shadow-sm">
+                      <Check className="w-3 h-3 text-white" />
+                    </div>
                   )}
-                  <strong style={{ fontSize: "15px" }}>{theme.name}</strong>
-                  <span style={{ fontSize: "12px", opacity: 0.8, fontWeight: 600 }}>{theme.badge}</span>
-                </div>
+                  
+                  {/* Color preview circle */}
+                  <div 
+                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-full shadow-sm mb-2 border border-black/5" 
+                    style={{ backgroundColor: theme.accentColor }} 
+                  />
+                  
+                  {/* Theme Name */}
+                  <span 
+                    className="text-[10px] sm:text-xs font-bold text-center px-1 truncate w-full"
+                    style={{ color: theme.textColor }}
+                  >
+                    {theme.name}
+                  </span>
+                </button>
               );
             })}
           </div>
         </div>
 
-        {/* Colonne Droite : Preview Mobile */}
-        <div style={{ flex: "1 1 400px", background: "#f8f9fa", display: "flex", alignItems: "center", justifyContent: "center", padding: "40px", borderLeft: "1px solid #eaeaea" }}>
-          <div style={{ 
-            width: "375px", height: "812px", background: "#000", borderRadius: "40px", 
-            padding: "12px", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", position: "relative"
-          }}>
-            {/* Ecran du téléphone */}
-            <div className={`${themeClass}`} data-theme={dataTheme} style={{ width: "100%", height: "100%", background: "var(--theme-bg)", borderRadius: "28px", overflow: "hidden", position: "relative" }}>
+        {/* RIGHT COLUMN: Mobile Preview */}
+        <div className="w-full lg:w-[45%] xl:w-[40%] bg-slate-100/50 lg:border-l border-slate-200 flex flex-col items-center justify-center p-8 lg:p-12 min-h-[600px] lg:min-h-0 relative">
+          
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-slate-200 text-sm font-semibold text-slate-700 shadow-sm mb-8 z-10">
+            <Smartphone className="h-4 w-4 text-blue-600" />
+            Aperçu en direct
+          </div>
+
+          {/* iPhone Mockup */}
+          <div className="relative mx-auto w-[280px] h-[580px] sm:w-[320px] sm:h-[650px] bg-[#1a1a1a] rounded-[2.5rem] shadow-2xl border-[8px] border-[#1a1a1a] ring-1 ring-slate-900/10 overflow-hidden transform transition-transform hover:scale-[1.02] duration-500">
+            
+            {/* iPhone Notch */}
+            <div className="absolute top-0 inset-x-0 w-32 h-6 bg-[#1a1a1a] rounded-b-3xl mx-auto z-30 flex items-center justify-center gap-2">
+              {/* Speaker / Camera details inside notch */}
+              <div className="w-10 h-1.5 bg-[#0a0a0a] rounded-full"></div>
+              <div className="w-1.5 h-1.5 bg-[#080808] rounded-full ring-1 ring-white/10"></div>
+            </div>
+
+            {/* Screen Content */}
+            <div className={`w-full h-full rounded-[2rem] overflow-y-auto overflow-x-hidden relative [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${themeClass}`} style={{ backgroundColor: "var(--theme-bg)" }}>
               <RestaurantCardLayout 
                 restaurantName={restaurantInfo.restaurantName || "Mon Restaurant"}
+                address={restaurantInfo.address}
                 logoUrl={previewLogo}
                 locationUrl={restaurantInfo.locationUrl}
                 phoneNumber={restaurantInfo.phoneNumber}
+                facebookUrl={restaurantInfo.facebookUrl}
+                instagramUrl={restaurantInfo.instagramUrl}
+                xUrl={restaurantInfo.xUrl}
+                snapchatUrl={restaurantInfo.snapchatUrl}
+                additionalInfo={restaurantInfo.additionalInfo}
+                schedule={restaurantInfo.schedule}
                 menuImages={previewMenus}
+                placeImages={previewPlaces}
                 inPreview={true}
+                layout={customization.cardLayout}
               />
             </div>
-            {/* Encoche iPhone */}
-            <div style={{ position: "absolute", top: "12px", left: "50%", transform: "translateX(-50%)", width: "120px", height: "30px", background: "#000", borderBottomLeftRadius: "16px", borderBottomRightRadius: "16px" }}></div>
+            
+            {/* Screen Glare Effect */}
+            <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/5 to-white/0 pointer-events-none rounded-[2rem]"></div>
           </div>
         </div>
 

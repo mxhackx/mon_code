@@ -7,35 +7,40 @@ import sharp from 'sharp';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Card, Prisma } from '@prisma/client';
 import 'multer';
-
 export interface CardMetadata {
   userName?: string;
   clientName?: string;
   workDone?: string;
-  amountReceived?: string;
+  amountReceived?: number;
+  currency?: string;
   restaurantName?: string;
+  address?: string;
+  cardLayout?: string;
   locationUrl?: string;
   phoneNumber?: string;
+  facebookUrl?: string;
+  instagramUrl?: string;
+  xUrl?: string;
+  snapchatUrl?: string;
+  schedule?: string;
+  additionalInfo?: string;
   themeId?: string;
   qrStyle?: string;
 }
-
 export interface UploadedCardFiles {
   file?: Express.Multer.File;
   logo?: Express.Multer.File;
   menu?: Express.Multer.File[];
+  place?: Express.Multer.File[];
 }
-
 @Injectable()
 export class CardsService {
   private readonly logger = new Logger(CardsService.name);
   private supabase: SupabaseClient | null = null;
   private readonly bucketName = process.env.SUPABASE_STORAGE_BUCKET || 'cards';
-
   constructor(private readonly prisma: PrismaService) {
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
-
     if (supabaseUrl && supabaseKey) {
       this.supabase = createClient(supabaseUrl, supabaseKey);
       this.logger.log(`Supabase Storage configuré (bucket: "${this.bucketName}")`);
@@ -45,7 +50,6 @@ export class CardsService {
       );
     }
   }
-
   /**
    * Traite une image avec Sharp (optimisation WebP) et la stocke sur Supabase Storage ou en local
    */
@@ -64,7 +68,6 @@ export class CardsService {
         `L'image "${fileName}" est corrompue ou dans un format illisible. Veuillez fournir une image valide (PNG, JPEG, WEBP).`,
       );
     }
-
     if (this.supabase) {
       const { error: uploadError } = await this.supabase.storage
         .from(this.bucketName)
@@ -72,12 +75,10 @@ export class CardsService {
           contentType: 'image/webp',
           upsert: true,
         });
-
       if (uploadError) {
         this.logger.error(`Erreur upload Supabase: ${uploadError.message}`);
         throw new BadRequestException('Échec du stockage de l’image. Veuillez réessayer ultérieurement.');
       }
-
       const { data } = this.supabase.storage.from(this.bucketName).getPublicUrl(fileName);
       return data.publicUrl;
     } else {
@@ -85,19 +86,16 @@ export class CardsService {
       await fs.promises.mkdir(uploadsDir, { recursive: true });
       const filePath = path.join(uploadsDir, fileName);
       await fs.promises.writeFile(filePath, webpBuffer);
-
       const apiUrl = process.env.API_URL ?? 'http://localhost:5500';
       return `${apiUrl}/uploads/${fileName}`;
     }
   }
-
   /**
    * Génère un QR Code avec le style graphique sélectionné
    */
   private async generateStyledQrCode(cardUrl: string, qrStyle: string = 'style-1'): Promise<string> {
     let darkColor = '#181411';
     let lightColor = '#ffffff';
-
     switch (qrStyle) {
       case 'style-2': // Signature Orange MonCode
         darkColor = '#ef6a22';
@@ -121,7 +119,6 @@ export class CardsService {
         lightColor = '#ffffff';
         break;
     }
-
     return QRCode.toDataURL(cardUrl, {
       width: 500,
       margin: 2,
@@ -131,23 +128,19 @@ export class CardsService {
       },
     });
   }
-
   async createCard(files: UploadedCardFiles, metadata?: CardMetadata) {
     const hasAnyFile = files.file || files.logo || (files.menu && files.menu.length > 0);
     if (!hasAnyFile) {
       throw new BadRequestException('Aucun fichier fourni');
     }
-
     // 1. Génération d'un slug unique (8 caractères alphanumériques)
     let slug = '';
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
     let isUnique = false;
-
     while (!isUnique) {
       slug = Array.from({ length: 8 }, () =>
         chars.charAt(Math.floor(Math.random() * chars.length)),
       ).join('');
-
       const existing = await this.prisma.card.findUnique({
         where: { slug },
       });
@@ -155,17 +148,14 @@ export class CardsService {
         isUnique = true;
       }
     }
-
     // 2. Traitement et upload des images (Logo et/ou Menu)
     let logoUrl: string | null = null;
     const menuImagesUrls: string[] = [];
-
     if (files.logo) {
       logoUrl = await this.processAndUploadImage(files.logo.buffer, `${slug}-logo.webp`);
     } else if (files.file) {
       logoUrl = await this.processAndUploadImage(files.file.buffer, `${slug}.webp`);
     }
-
     if (files.menu && files.menu.length > 0) {
       for (let i = 0; i < files.menu.length; i++) {
         const menuFile = files.menu[i];
@@ -173,14 +163,19 @@ export class CardsService {
         menuImagesUrls.push(menuUrl);
       }
     }
-
+    const placeImagesUrls: string[] = [];
+    if (files.place && files.place.length > 0) {
+      for (let i = 0; i < files.place.length; i++) {
+        const placeFile = files.place[i];
+        const placeUrl = await this.processAndUploadImage(placeFile.buffer, `${slug}-place-${i}.webp`);
+        placeImagesUrls.push(placeUrl);
+      }
+    }
     const primaryImageUrl = logoUrl || menuImagesUrls[0] || '';
-
     // 3. Génération du QR code selon le style choisi
     const appUrl = process.env.APP_URL ?? 'http://localhost:3000';
     const cardUrl = `${appUrl}/c/${slug}`;
     const qrCode = await this.generateStyledQrCode(cardUrl, metadata?.qrStyle);
-
     // Validation de sécurité de l'URL de localisation (protection anti-XSS)
     let safeLocationUrl: string | null = null;
     if (metadata?.locationUrl) {
@@ -189,32 +184,32 @@ export class CardsService {
         safeLocationUrl = trimmedLocation;
       }
     }
-
     // Helper de normalisation : convertit les chaînes vides ou avec espaces seuls en null
     const cleanStr = (val?: string | null): string | null =>
       val && val.trim().length > 0 ? val.trim() : null;
-
     // 4. Enregistrement dans PostgreSQL via Prisma
     const createData: Prisma.CardCreateInput = {
       slug,
       imageUrl: primaryImageUrl,
       restaurantName: cleanStr(metadata?.restaurantName),
+      address: cleanStr(metadata?.address),
       logoUrl: logoUrl ?? null,
       locationUrl: safeLocationUrl,
       phoneNumber: cleanStr(metadata?.phoneNumber),
       menuImages: menuImagesUrls.length > 0 ? JSON.stringify(menuImagesUrls) : null,
+      placeImages: placeImagesUrls.length > 0 ? JSON.stringify(placeImagesUrls) : null,
       themeId: cleanStr(metadata?.themeId) ?? 'theme-1',
+      cardLayout: cleanStr(metadata?.cardLayout) ?? 'classic',
       qrStyle: cleanStr(metadata?.qrStyle) ?? 'style-1',
       userName: cleanStr(metadata?.userName),
       clientName: cleanStr(metadata?.clientName),
       workDone: cleanStr(metadata?.workDone),
-      amountReceived: cleanStr(metadata?.amountReceived),
+      amountReceived: metadata?.amountReceived !== undefined && metadata.amountReceived !== null ? Number(metadata.amountReceived) : null,
+      currency: cleanStr(metadata?.currency) ?? 'fcfa',
     };
-
     const card: Card = await this.prisma.card.create({
       data: createData,
     });
-
     return {
       slug: card.slug,
       imageUrl: card.imageUrl,
@@ -230,18 +225,14 @@ export class CardsService {
       createdAt: card.createdAt,
     };
   }
-
   async getCardBySlug(slug: string) {
     const card = (await this.prisma.card.findUnique({
       where: { slug },
     }));
-
     if (!card) {
       throw new NotFoundException(`Carte introuvable pour le slug "${slug}"`);
     }
-
     const appUrl = process.env.APP_URL ?? 'http://localhost:3000';
-
     let menuImages: string[] = [];
     if (card.menuImages) {
       try {
@@ -250,30 +241,51 @@ export class CardsService {
         menuImages = [card.menuImages];
       }
     }
-
+    let placeImages: string[] = [];
+    if (card.placeImages) {
+      try {
+        placeImages = JSON.parse(card.placeImages);
+      } catch {
+        placeImages = [card.placeImages];
+      }
+    }
+    let schedule = null;
+    if (card.schedule) {
+      try {
+        schedule = typeof card.schedule === 'string' ? JSON.parse(card.schedule) : card.schedule;
+      } catch {
+        schedule = null;
+      }
+    }
     // Endpoint public : exclusion stricte des données d'intervention internes (userName, clientName, workDone, amountReceived)
     return {
       slug: card.slug,
       imageUrl: card.imageUrl,
       restaurantName: card.restaurantName ?? null,
+      address: card.address ?? null,
       logoUrl: card.logoUrl ?? null,
       locationUrl: card.locationUrl ?? null,
       phoneNumber: card.phoneNumber ?? null,
+      facebookUrl: card.facebookUrl ?? null,
+      instagramUrl: card.instagramUrl ?? null,
+      xUrl: card.xUrl ?? null,
+      snapchatUrl: card.snapchatUrl ?? null,
+      additionalInfo: card.additionalInfo ?? null,
+      schedule,
       menuImages,
+      placeImages,
       themeId: card.themeId ?? 'theme-1',
+      cardLayout: card.cardLayout ?? 'classic',
       qrStyle: card.qrStyle ?? 'style-1',
       cardUrl: `${appUrl}/c/${card.slug}`,
       createdAt: card.createdAt,
     };
   }
-
   async getAllCards() {
     const cards: Card[] = await this.prisma.card.findMany({
       orderBy: { createdAt: 'desc' },
     });
-
     const appUrl = process.env.APP_URL ?? 'http://localhost:3000';
-
     return cards.map((card) => {
       let menuImages: string[] = [];
       if (card.menuImages) {
@@ -283,7 +295,6 @@ export class CardsService {
           menuImages = [card.menuImages];
         }
       }
-
       return {
         id: card.id.toString(),
         slug: card.slug,
@@ -299,12 +310,12 @@ export class CardsService {
         clientName: card.clientName ?? null,
         workDone: card.workDone ?? null,
         amountReceived: card.amountReceived ?? null,
+        currency: card.currency ?? 'fcfa',
         cardUrl: `${appUrl}/c/${card.slug}`,
         createdAt: card.createdAt,
       };
     });
   }
-
   /**
    * Récupère le fichier binaire de la carte pour téléchargement direct
    */
@@ -312,23 +323,18 @@ export class CardsService {
     const card = await this.prisma.card.findUnique({
       where: { slug },
     });
-
     if (!card) {
       throw new NotFoundException(`Carte introuvable pour le slug "${slug}"`);
     }
-
     const filename = `carte-${slug}.webp`;
     const contentType = 'image/webp';
-
     if (this.supabase) {
       const storageKey = card.imageUrl.includes(`/${this.bucketName}/`)
         ? card.imageUrl.split(`/${this.bucketName}/`)[1]
         : `${slug}.webp`;
-
       const { data, error } = await this.supabase.storage
         .from(this.bucketName)
         .download(storageKey);
-
       if (!error && data) {
         const arrayBuffer = await data.arrayBuffer();
         return {
@@ -338,7 +344,6 @@ export class CardsService {
         };
       }
     }
-
     // Si local ou si Supabase direct
     const uploadsDir = path.join(process.cwd(), 'uploads');
     const localFileName = path.basename(card.imageUrl);
@@ -347,28 +352,22 @@ export class CardsService {
       const buffer = await fs.promises.readFile(localPath);
       return { buffer, contentType, filename };
     }
-
     // Repli via fetch HTTP sécurisé (Anti-SSRF & Anti-DoS)
     if (card.imageUrl.startsWith('https://')) {
       try {
         const urlObj = new URL(card.imageUrl);
         const host = urlObj.hostname;
-
         // 1. Liste noire basique anti-SSRF (Bloquer localhost et les IPs directes)
         const isLocalhost = host === 'localhost' || host === '127.0.0.1' || host === '::1';
         const isIpAddress = /^(\d{1,3}\.){3}\d{1,3}$/.test(host) || /^[0-9a-fA-F:]+$/.test(host);
-        
         if (isLocalhost || isIpAddress) {
           throw new Error('SSRF Bloqué : Résolution réseau interne ou IP directe interdite.');
         }
-
         // 2. Protection Anti-DoS (Timeout strict de 5 secondes)
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);
-
         const response = await fetch(card.imageUrl, { signal: controller.signal });
         clearTimeout(timeoutId);
-
         if (response.ok) {
           const arrayBuffer = await response.arrayBuffer();
           return {
@@ -381,16 +380,13 @@ export class CardsService {
         this.logger.warn(`Échec de récupération de l'image distante (sécurité ou réseau) : ${err}`);
       }
     }
-
     throw new NotFoundException(`Le fichier image pour la carte "${slug}" est introuvable`);
   }
-
-  async updateCardBySlug(slug: string, updateData: any, files?: { file?: Express.Multer.File[]; logo?: Express.Multer.File[]; menu?: Express.Multer.File[]; }) {
+  async updateCardBySlug(slug: string, updateData: any, files?: { file?: Express.Multer.File[]; logo?: Express.Multer.File[]; menu?: Express.Multer.File[]; place?: Express.Multer.File[]; }) {
     const existing = await this.prisma.card.findUnique({ where: { slug } });
     if (!existing) {
       throw new NotFoundException(`La carte "${slug}" n'existe pas`);
     }
-
     if (this.supabase) {
       const getSafeExt = (mimetype: string) => mimetype.split('/')[1]?.replace('jpeg', 'jpg') || 'png';
       const deleteOldFile = async (oldUrl: string | null) => {
@@ -401,26 +397,18 @@ export class CardsService {
           }
         }
       };
-
       if (files?.file && files.file.length > 0) {
         const file = files.file[0];
         await deleteOldFile(existing.imageUrl);
-        const fileName = `card-${Date.now()}-${Math.random().toString(36).substring(7)}.${getSafeExt(file.mimetype)}`;
-        const { data, error } = await this.supabase.storage.from('images').upload(fileName, file.buffer, { contentType: file.mimetype });
-        if (!error && data) updateData.imageUrl = this.supabase.storage.from('images').getPublicUrl(data.path).data.publicUrl;
+        updateData.imageUrl = await this.processAndUploadImage(file.buffer, `card-${Date.now()}-${Math.random().toString(36).substring(7)}.webp`);
       }
-
       if (files?.logo && files.logo.length > 0) {
         const logo = files.logo[0];
         await deleteOldFile(existing.logoUrl);
-        const logoName = `logo-${Date.now()}-${Math.random().toString(36).substring(7)}.${getSafeExt(logo.mimetype)}`;
-        const { data, error } = await this.supabase.storage.from('images').upload(logoName, logo.buffer, { contentType: logo.mimetype });
-        if (!error && data) updateData.logoUrl = this.supabase.storage.from('images').getPublicUrl(data.path).data.publicUrl;
+        updateData.logoUrl = await this.processAndUploadImage(logo.buffer, `logo-${Date.now()}-${Math.random().toString(36).substring(7)}.webp`);
       }
-
       let finalMenuImages: string[] = [];
       let keptUrls: string[] = [];
-
       if (updateData.existingMenuUrls !== undefined) {
         try {
           keptUrls = typeof updateData.existingMenuUrls === 'string' 
@@ -430,40 +418,120 @@ export class CardsService {
           keptUrls = [];
         }
       } else {
-        keptUrls = (existing.menuImages as unknown as string[]) || [];
+        keptUrls = existing.menuImages ? JSON.parse(existing.menuImages as string) : [];
       }
-      
       delete updateData.existingMenuUrls;
-
-      if (existing.menuImages && Array.isArray(existing.menuImages)) {
-        const toDelete = (existing.menuImages as unknown as string[]).filter(url => !keptUrls.includes(url));
+      if (existing.menuImages) {
+        const oldUrls = JSON.parse(existing.menuImages as string) as string[];
+        const toDelete = oldUrls.filter(url => !keptUrls.includes(url));
         if (toDelete.length > 0) {
           await Promise.all(toDelete.map(url => deleteOldFile(url)));
         }
       }
-      
       finalMenuImages = [...keptUrls];
-
       if (files?.menu && files.menu.length > 0) {
         const uploadPromises = files.menu.map(async (menuFile) => {
-          const menuName = `menu-${Date.now()}-${Math.random().toString(36).substring(7)}.${getSafeExt(menuFile.mimetype)}`;
-          const { data, error } = await this.supabase!.storage.from('images').upload(menuName, menuFile.buffer, { contentType: menuFile.mimetype });
-          if (!error && data) return this.supabase!.storage.from('images').getPublicUrl(data.path).data.publicUrl;
-          return null;
+          return await this.processAndUploadImage(menuFile.buffer, `menu-${Date.now()}-${Math.random().toString(36).substring(7)}.webp`);
         });
-
         const results = await Promise.all(uploadPromises);
         finalMenuImages.push(...(results.filter(url => url !== null) as string[]));
       }
-
-      updateData.menuImages = finalMenuImages;
+      updateData.menuImages = JSON.stringify(finalMenuImages);
+      let finalPlaceImages: string[] = [];
+      let keptPlaceUrls: string[] = [];
+      if (updateData.existingPlaceUrls !== undefined) {
+        try {
+          keptPlaceUrls = typeof updateData.existingPlaceUrls === 'string' 
+            ? JSON.parse(updateData.existingPlaceUrls) 
+            : updateData.existingPlaceUrls;
+        } catch (e) {
+          keptPlaceUrls = [];
+        }
+      } else {
+        keptPlaceUrls = existing.placeImages ? JSON.parse(existing.placeImages as string) : [];
+      }
+      delete updateData.existingPlaceUrls;
+      if (existing.placeImages) {
+        const oldPlaceUrls = JSON.parse(existing.placeImages as string) as string[];
+        const toDeletePlace = oldPlaceUrls.filter(url => !keptPlaceUrls.includes(url));
+        if (toDeletePlace.length > 0) {
+          await Promise.all(toDeletePlace.map(url => deleteOldFile(url)));
+        }
+      }
+      finalPlaceImages = [...keptPlaceUrls];
+      if (files?.place && files.place.length > 0) {
+        const uploadPlacePromises = files.place.map(async (placeFile) => {
+          return await this.processAndUploadImage(placeFile.buffer, `place-${Date.now()}-${Math.random().toString(36).substring(7)}.webp`);
+        });
+        const resultsPlace = await Promise.all(uploadPlacePromises);
+        finalPlaceImages.push(...(resultsPlace.filter(url => url !== null) as string[]));
+      }
+      updateData.placeImages = JSON.stringify(finalPlaceImages);
     }
-
     const updatedCard = await this.prisma.card.update({
       where: { slug },
       data: updateData,
     });
-
     return updatedCard;
   }
+
+  async deleteCardBySlug(slug: string) {
+    const existing = await this.prisma.card.findUnique({ where: { slug } });
+    if (!existing) {
+      throw new NotFoundException(`La carte "${slug}" n'existe pas`);
+    }
+
+    if (this.supabase) {
+      const pathsToDelete: string[] = [];
+      const addPath = (url: string | null) => {
+        if (url && url.includes('/storage/v1/object/public/visicard/')) {
+          pathsToDelete.push(url.split('/storage/v1/object/public/visicard/')[1]);
+        }
+      };
+
+      addPath(existing.imageUrl);
+      addPath(existing.logoUrl);
+      if (existing.menuImages) {
+        try {
+          const arr = JSON.parse(existing.menuImages);
+          arr.forEach(addPath);
+        } catch { addPath(existing.menuImages); }
+      }
+      if (existing.placeImages) {
+        try {
+          const arr = JSON.parse(existing.placeImages);
+          arr.forEach(addPath);
+        } catch { addPath(existing.placeImages); }
+      }
+
+      if (pathsToDelete.length > 0) {
+        await this.supabase.storage.from('visicard').remove(pathsToDelete);
+      }
+    } else {
+      const fs = require('fs');
+      const path = require('path');
+      const uploadsDir = path.join(process.cwd(), 'uploads');
+      
+      const deleteLocal = (url: string | null) => {
+        if (url) {
+          const fileName = path.basename(url);
+          const localPath = path.join(uploadsDir, fileName);
+          if (fs.existsSync(localPath)) fs.unlinkSync(localPath);
+        }
+      };
+
+      deleteLocal(existing.imageUrl);
+      deleteLocal(existing.logoUrl);
+      if (existing.menuImages) {
+        try { JSON.parse(existing.menuImages).forEach(deleteLocal); } catch {}
+      }
+      if (existing.placeImages) {
+        try { JSON.parse(existing.placeImages).forEach(deleteLocal); } catch {}
+      }
+    }
+
+    await this.prisma.card.delete({ where: { slug } });
+    return { success: true, message: `Carte ${slug} supprimée avec succès` };
+  }
+
 }

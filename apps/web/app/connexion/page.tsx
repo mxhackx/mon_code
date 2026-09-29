@@ -2,24 +2,8 @@
 
 import { useState, FormEvent, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { Eye, EyeOff, ArrowLeft, LockKeyhole, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { useFile } from "../context/FileContext";
-
-const BRAND = {
-  blue: "#2F8CFF",
-  blueDark: "#1670E8",
-  blueSoft: "#EEF6FF",
-
-  violet: "#7357E8",
-  violetSoft: "#F3F0FF",
-
-  ink: "#080B10",
-  muted: "#697382",
-
-  line: "#E8EBEF",
-  soft: "#F8F9FB",
-};
 
 export default function ConnexionPage() {
   const router = useRouter();
@@ -43,617 +27,103 @@ export default function ConnexionPage() {
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
-
     if (!identifier.trim() || !password.trim()) {
-      setError("Veuillez renseigner votre identifiant et votre mot de passe.");
+      setError("Please fill in your credentials.");
       return;
     }
-
     setIsLoading(true);
     setError(null);
-
     try {
-      const apiUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:5500";
-
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5500";
       const res = await fetch(`${apiUrl}/auth/login`, {
         credentials: "include",
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          identifier: identifier.trim(),
-          password,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identifier: identifier.trim(), password }),
       });
-
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-
-        throw new Error(
-          errData.message || "Identifiant ou mot de passe incorrect"
-        );
+        throw new Error(errData.message || "Invalid credentials");
       }
-
       const data = await res.json();
-
-      const role: "admin" | "user" =
-        data.user?.role === "admin" ? "admin" : "user";
-
-      loginSession(
-        data.access_token,
-        role,
-        {
-          id: data.user?.id,
-          email: data.user?.email,
-        },
-        data.refresh_token
-      );
-
-      if (role === "admin") {
-        router.push("/admin");
-      } else {
-        router.push("/intervenant");
-      }
+      const role: "admin" | "user" = data.user?.role === "admin" ? "admin" : "user";
+      loginSession(data.access_token, role, { id: data.user?.id, email: data.user?.email }, data.refresh_token);
+      
+      if (role === "admin") router.push("/admin");
+      else router.push("/intervenant");
     } catch (err: unknown) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Impossible de se connecter au serveur"
-      );
+      setError(err instanceof Error ? err.message : "Connection failed");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "#FFFFFF",
-        color: BRAND.ink,
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      {/* HEADER */}
-      <header
-        style={{
-          width: "100%",
-          height: "72px",
-          borderBottom: `1px solid ${BRAND.line}`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "0 clamp(20px, 5vw, 72px)",
-          background: "#FFFFFF",
-        }}
-      >
-        <Link
-          href="/"
-          aria-label="MonCode - accueil"
-          style={{
-            textDecoration: "none",
-            color: BRAND.ink,
-            fontSize: "22px",
-            fontWeight: 800,
-            letterSpacing: "-0.8px",
-          }}
-        >
-          <span>Mon</span>
-          <span style={{ color: BRAND.blue }}>Code</span>
-          <span
-            style={{
-              display: "inline-block",
-              width: "5px",
-              height: "5px",
-              borderRadius: "50%",
-              background: BRAND.violet,
-              marginLeft: "3px",
-              marginBottom: "2px",
-            }}
-          />
-        </Link>
-
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            fontSize: "13px",
-            color: BRAND.muted,
-          }}
-        >
-          <LockKeyhole size={14} strokeWidth={2} />
-          <span>Espace sécurisé</span>
-        </div>
+    <main className="min-h-screen bg-[#F7F8FC] flex flex-col relative font-sans text-slate-900">
+      {/* HEADER LOGO */}
+      <header className="absolute top-0 left-0 p-8 flex items-center gap-2">
+        <img src="/logo.svg" alt="MonCode Logo" className="h-6 w-6" />
+        <span className="font-bold text-xl tracking-tight text-[#1E293B]">MonCode</span>
       </header>
 
-      {/* CONTENT */}
-      <section
-        style={{
-          flex: 1,
-          width: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "56px 20px 72px",
-        }}
-      >
-        <div
-          style={{
-            width: "100%",
-            maxWidth: "460px",
-          }}
-        >
-          {/* BACK */}
-          <div style={{ marginBottom: "30px" }}>
-            <Link
-              href="/"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "7px",
-                color: BRAND.muted,
-                textDecoration: "none",
-                fontSize: "13px",
-                fontWeight: 500,
-                transition: "color 0.2s ease",
-              }}
-            >
-              <ArrowLeft size={15} />
-              Retour à l&apos;accueil
-            </Link>
+      {/* CENTER CONTENT */}
+      <div className="flex-1 flex items-center justify-center p-4">
+        <div className="w-full max-w-[440px] shadow-sm border border-slate-100 rounded-[12px] p-10 bg-white">
+          <div className="text-center mb-8">
+            <h1 className="text-[24px] font-bold text-[#111827]">Bienvenue!</h1>
           </div>
 
-          {/* INTRO */}
-          <div style={{ marginBottom: "30px" }}>
-            <div
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "7px",
-                padding: "7px 11px",
-                borderRadius: "999px",
-                background: BRAND.blueSoft,
-                border: `1px solid #DCEEFF`,
-                color: BRAND.blueDark,
-                fontSize: "11px",
-                fontWeight: 700,
-                letterSpacing: "0.2px",
-                marginBottom: "18px",
-              }}
-            >
-              <span
-                style={{
-                  width: "6px",
-                  height: "6px",
-                  borderRadius: "50%",
-                  background: BRAND.blue,
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div className="relative">
+              <Mail className="absolute left-[14px] top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-slate-400" />
+              <input
+                type="text"
+                placeholder="Entrez votre email"
+                className="w-full pl-[42px] h-12 rounded-[6px] border border-slate-200 text-sm shadow-none focus:outline-none focus:ring-1 focus:ring-blue-400 focus:border-blue-400"
+                value={identifier}
+                onChange={(e) => {
+                  setIdentifier(e.target.value);
+                  if (error) setError(null);
                 }}
+                required
               />
-              Accès professionnel
             </div>
+            <div className="relative mt-4">
+              <Lock className="absolute left-[14px] top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-slate-400" />
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="Entrez votre mot de passe"
+                className="w-full pl-[42px] pr-10 h-12 rounded-[6px] border border-slate-200 text-sm shadow-none focus:outline-none focus:ring-1 focus:ring-blue-400 focus:border-blue-400"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (error) setError(null);
+                }}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+              >
+                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
+            </div>
+            
+            {error && <div className="text-sm text-red-500 font-medium text-center pb-2">{error}</div>}
 
-            <h1
-              style={{
-                margin: 0,
-                fontSize: "clamp(32px, 6vw, 46px)",
-                lineHeight: 1.05,
-                letterSpacing: "-1.8px",
-                fontWeight: 800,
-                color: BRAND.ink,
-              }}
-            >
-              Bienvenue
-              <br />
-              sur <span style={{ color: BRAND.blue }}>MonCode.</span>
-            </h1>
-
-            <p
-              style={{
-                margin: "16px 0 0",
-                maxWidth: "410px",
-                color: BRAND.muted,
-                fontSize: "14px",
-                lineHeight: 1.65,
-              }}
-            >
-              Connectez-vous pour accéder à votre espace de gestion ou
-              poursuivre la création de vos cartes.
-            </p>
-          </div>
-
-          {/* LOGIN CARD */}
-          <div
-            style={{
-              border: `1px solid ${BRAND.line}`,
-              borderRadius: "20px",
-              background: "#FFFFFF",
-              padding: "26px",
-              boxShadow: "0 12px 40px rgba(8, 11, 16, 0.06)",
-            }}
-          >
-            <form
-              onSubmit={handleLogin}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "20px",
-              }}
-            >
-              {/* IDENTIFIER */}
-              <div>
-                <label
-                  htmlFor="connexion-id"
-                  style={{
-                    display: "block",
-                    marginBottom: "8px",
-                    color: BRAND.ink,
-                    fontSize: "13px",
-                    fontWeight: 650,
-                  }}
-                >
-                  Identifiant ou email
-                </label>
-
-                <input
-                  id="connexion-id"
-                  type="text"
-                  placeholder="ex. admin ou user@moncode.com"
-                  value={identifier}
-                  onChange={(e) => {
-                    setIdentifier(e.target.value);
-                    if (error) setError(null);
-                  }}
-                  required
-                  autoComplete="username"
-                  style={{
-                    width: "100%",
-                    height: "48px",
-                    borderRadius: "11px",
-                    border: `1px solid ${BRAND.line}`,
-                    background: BRAND.soft,
-                    padding: "0 14px",
-                    color: BRAND.ink,
-                    fontSize: "14px",
-                    outline: "none",
-                    boxSizing: "border-box",
-                    transition:
-                      "border-color 0.2s ease, background 0.2s ease",
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = BRAND.blue;
-                    e.currentTarget.style.background = "#FFFFFF";
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = BRAND.line;
-                    e.currentTarget.style.background = BRAND.soft;
-                  }}
-                />
-              </div>
-
-              {/* PASSWORD */}
-              <div>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    marginBottom: "8px",
-                  }}
-                >
-                  <label
-                    htmlFor="connexion-pass"
-                    style={{
-                      color: BRAND.ink,
-                      fontSize: "13px",
-                      fontWeight: 650,
-                    }}
-                  >
-                    Mot de passe
-                  </label>
-                </div>
-
-                <div style={{ position: "relative" }}>
-                  <input
-                    id="connexion-pass"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Entrez votre mot de passe"
-                    value={password}
-                    onChange={(e) => {
-                      setPassword(e.target.value);
-                      if (error) setError(null);
-                    }}
-                    required
-                    autoComplete="current-password"
-                    style={{
-                      width: "100%",
-                      height: "48px",
-                      borderRadius: "11px",
-                      border: `1px solid ${BRAND.line}`,
-                      background: BRAND.soft,
-                      padding: "0 48px 0 14px",
-                      color: BRAND.ink,
-                      fontSize: "14px",
-                      outline: "none",
-                      boxSizing: "border-box",
-                      transition:
-                        "border-color 0.2s ease, background 0.2s ease",
-                    }}
-                    onFocus={(e) => {
-                      e.currentTarget.style.borderColor = BRAND.blue;
-                      e.currentTarget.style.background = "#FFFFFF";
-                    }}
-                    onBlur={(e) => {
-                      e.currentTarget.style.borderColor = BRAND.line;
-                      e.currentTarget.style.background = BRAND.soft;
-                    }}
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((value) => !value)}
-                    aria-label={
-                      showPassword
-                        ? "Masquer le mot de passe"
-                        : "Afficher le mot de passe"
-                    }
-                    style={{
-                      position: "absolute",
-                      top: "50%",
-                      right: "12px",
-                      transform: "translateY(-50%)",
-                      width: "32px",
-                      height: "32px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      border: "none",
-                      background: "transparent",
-                      color: BRAND.muted,
-                      cursor: "pointer",
-                      borderRadius: "8px",
-                    }}
-                  >
-                    {showPassword ? (
-                      <EyeOff size={17} />
-                    ) : (
-                      <Eye size={17} />
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {/* ERROR */}
-              {error && (
-                <div
-                  role="alert"
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: "9px",
-                    padding: "11px 13px",
-                    borderRadius: "11px",
-                    background: "#FFF6F5",
-                    border: "1px solid #F4D3D0",
-                    color: "#B42318",
-                    fontSize: "12px",
-                    lineHeight: 1.45,
-                  }}
-                >
-                  <AlertCircle
-                    size={16}
-                    style={{
-                      flexShrink: 0,
-                      marginTop: "1px",
-                    }}
-                  />
-
-                  <span>{error}</span>
-                </div>
-              )}
-
-              {/* SUBMIT */}
+            <div className="pt-4">
               <button
                 type="submit"
                 disabled={isLoading}
-                style={{
-                  width: "100%",
-                  height: "50px",
-                  marginTop: "2px",
-                  border: "none",
-                  borderRadius: "11px",
-                  background: isLoading
-                    ? "#8CBFFF"
-                    : BRAND.blue,
-                  color: "#FFFFFF",
-                  fontSize: "14px",
-                  fontWeight: 700,
-                  cursor: isLoading ? "not-allowed" : "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "8px",
-                  transition:
-                    "background 0.2s ease, transform 0.2s ease",
-                  boxShadow: "0 6px 18px rgba(47, 140, 255, 0.18)",
-                }}
-                onMouseEnter={(e) => {
-                  if (!isLoading) {
-                    e.currentTarget.style.background = BRAND.blueDark;
-                    e.currentTarget.style.transform = "translateY(-1px)";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isLoading) {
-                    e.currentTarget.style.background = BRAND.blue;
-                    e.currentTarget.style.transform = "translateY(0)";
-                  }
-                }}
+                className="w-full h-12 rounded-[6px] bg-[#4E7BF2] hover:bg-[#3D66D6] disabled:opacity-70 text-white font-semibold text-[15px] shadow-sm transition-colors"
               >
-                {isLoading ? "Vérification en cours..." : "Se connecter"}
-                {!isLoading && <span>→</span>}
+                {isLoading ? "Connexion en cours..." : "Connexion"}
               </button>
-            </form>
-
-            {/* INFO */}
-            <div
-              style={{
-                marginTop: "24px",
-                paddingTop: "20px",
-                borderTop: `1px solid ${BRAND.line}`,
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: "10px",
-                }}
-              >
-                <div
-                  style={{
-                    width: "30px",
-                    height: "30px",
-                    flexShrink: 0,
-                    borderRadius: "8px",
-                    background: BRAND.violetSoft,
-                    color: BRAND.violet,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <LockKeyhole size={15} />
-                </div>
-
-                <div>
-                  <p
-                    style={{
-                      margin: "0 0 4px",
-                      color: BRAND.ink,
-                      fontSize: "12px",
-                      fontWeight: 700,
-                    }}
-                  >
-                    Redirection automatique
-                  </p>
-
-                  <p
-                    style={{
-                      margin: 0,
-                      color: BRAND.muted,
-                      fontSize: "11px",
-                      lineHeight: 1.55,
-                    }}
-                  >
-                    Votre espace sera ouvert automatiquement selon votre
-                    rôle après connexion.
-                  </p>
-                </div>
-              </div>
             </div>
-          </div>
-
-          {/* ROLE INFORMATION */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "10px",
-              marginTop: "14px",
-            }}
-          >
-            <div
-              style={{
-                border: `1px solid ${BRAND.line}`,
-                borderRadius: "12px",
-                padding: "13px 14px",
-                background: BRAND.soft,
-              }}
-            >
-              <p
-                style={{
-                  margin: "0 0 4px",
-                  fontSize: "11px",
-                  fontWeight: 750,
-                  color: BRAND.ink,
-                }}
-              >
-                Administrateur
-              </p>
-
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: "10px",
-                  lineHeight: 1.45,
-                  color: BRAND.muted,
-                }}
-              >
-                Gestion des cartes et du tableau de bord.
-              </p>
-            </div>
-
-            <div
-              style={{
-                border: `1px solid ${BRAND.line}`,
-                borderRadius: "12px",
-                padding: "13px 14px",
-                background: BRAND.soft,
-              }}
-            >
-              <p
-                style={{
-                  margin: "0 0 4px",
-                  fontSize: "11px",
-                  fontWeight: 750,
-                  color: BRAND.ink,
-                }}
-              >
-                Utilisateur
-              </p>
-
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: "10px",
-                  lineHeight: 1.45,
-                  color: BRAND.muted,
-                }}
-              >
-                Accès direct à la création de vos cartes.
-              </p>
-            </div>
-          </div>
+          </form>
         </div>
-      </section>
-
-      {/* FOOTER */}
-      <footer
-        style={{
-          width: "100%",
-          borderTop: `1px solid ${BRAND.line}`,
-          padding: "20px",
-          textAlign: "center",
-          background: "#FFFFFF",
-        }}
-      >
-        <p
-          style={{
-            margin: 0,
-            color: BRAND.muted,
-            fontSize: "11px",
-          }}
-        >
-          Connexion sécurisée ·{" "}
-          <span style={{ color: BRAND.blue, fontWeight: 650 }}>
-            MonCode
-          </span>
-        </p>
-      </footer>
+      </div>
     </main>
   );
 }
