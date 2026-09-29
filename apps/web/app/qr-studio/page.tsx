@@ -31,6 +31,7 @@ export default function QrStudioPage() {
     authRole,
     isAuthLoading,
     resetAll,
+    refreshAccessToken,
   } = useFile();
 
   useEffect(() => {
@@ -91,18 +92,35 @@ export default function QrStudioPage() {
 
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5500";
 
-      const response = await fetch(`${apiUrl}/cards`, {
+      let currentToken = authToken;
+      let response = await fetch(`${apiUrl}/cards`, {
         method: "POST",
         credentials: "include",
         headers: {
-          Authorization: `Bearer ${authToken}`,
+          Authorization: `Bearer ${currentToken}`,
         },
         body: formData,
       });
 
+      if (response.status === 401) {
+        // Tentative de rafraîchissement
+        const newToken = await refreshAccessToken();
+        if (newToken) {
+          currentToken = newToken;
+          response = await fetch(`${apiUrl}/cards`, {
+            method: "POST",
+            credentials: "include",
+            headers: {
+              Authorization: `Bearer ${currentToken}`,
+            },
+            body: formData,
+          });
+        }
+      }
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Erreur lors de la création de la carte.");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Erreur lors de la création de la carte (Session peut-être expirée).");
       }
 
       const data = await response.json();

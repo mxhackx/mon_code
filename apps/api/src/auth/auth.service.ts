@@ -57,15 +57,11 @@ export class AuthService {
     const userEmail = (process.env.USER_EMAIL || 'user@moncode.com').toLowerCase();
 
     let targetEmail = cleanId;
-    let expectedRole: 'admin' | 'user' = 'user';
 
-    // Conservation du confort de frappe pour le frontend (alias "admin" ou "user")
-    if (!cleanId || cleanId === 'admin' || cleanId === adminEmail) {
+    if (!cleanId || cleanId === 'admin') {
       targetEmail = adminEmail;
-      expectedRole = 'admin';
-    } else if (cleanId === 'user' || cleanId === 'restaurant' || cleanId === 'resto' || cleanId === userEmail) {
+    } else if (cleanId === 'user' || cleanId === 'restaurant' || cleanId === 'resto') {
       targetEmail = userEmail;
-      expectedRole = 'user';
     }
 
     const { data, error } = await this.supabase.auth.signInWithPassword({
@@ -77,8 +73,30 @@ export class AuthService {
       throw new UnauthorizedException('Identifiant ou mot de passe incorrect');
     }
 
-    // Le rôle est récupéré des métadonnées de Supabase ou déduit de l'email
-    const role: 'admin' | 'user' = (data.user.user_metadata?.role as 'admin' | 'user') || expectedRole;
+    // Déduction Intelligente du Rôle (Auto-Healing)
+    let role: 'admin' | 'user' = data.user.user_metadata?.role as 'admin' | 'user';
+    
+    if (!role) {
+      // Si le rôle n'est pas explicitement défini dans les métadonnées Supabase
+      if (data.user.email?.toLowerCase() === userEmail) {
+        role = 'user';
+      } else {
+        // Si l'email connecté ne correspond pas à l'email générique de l'intervenant,
+        // c'est forcément l'administrateur (qui a potentiellement changé son email).
+        role = 'admin';
+      }
+      
+      // Auto-réparation : on enregistre définitivement le rôle dans Supabase
+      try {
+        await this.supabase.auth.admin.updateUserById(data.user.id, {
+          user_metadata: { role }
+        });
+        this.logger.log(`Auto-healing: Rôle ${role} défini pour ${data.user.email}`);
+      } catch (err) {
+        this.logger.warn(`Impossible de mettre à jour les métadonnées pour ${data.user.email}`);
+      }
+    }
+
     const redirect = role === 'admin' ? '/admin' : '/intervenant';
 
     return {
@@ -183,6 +201,9 @@ export class AuthService {
     }
 
     const updatePayload: Record<string, unknown> = {};
+    // Auto-réparation pendant la mise à jour : on s'assure que le rôle est conservé
+    updatePayload.user_metadata = { ...(user as any).user_metadata, role: user.role };
+    
     if (trimmedEmail) {
       updatePayload.email = trimmedEmail;
       updatePayload.email_confirm = true;
