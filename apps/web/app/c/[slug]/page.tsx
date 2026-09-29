@@ -1,5 +1,5 @@
 "use client";
-import RestaurantCardLayout from "../../components/RestaurantCardLayout";
+import RestaurantCardLayout from "../../../components/RestaurantCardLayout";
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
@@ -9,11 +9,19 @@ interface CardData {
   slug: string;
   imageUrl: string;
   cardUrl: string;
-  restaurantName?: string | null;
+    restaurantName?: string | null;
+  address?: string | null;
   logoUrl?: string | null;
   locationUrl?: string | null;
   phoneNumber?: string | null;
   menuImages?: string[];
+  placeImages?: string[];
+  facebookUrl?: string | null;
+  instagramUrl?: string | null;
+  xUrl?: string | null;
+  snapchatUrl?: string | null;
+  additionalInfo?: string | null;
+  schedule?: any;
   themeId?: string | null;
   qrStyle?: string | null;
   createdAt: string;
@@ -109,8 +117,8 @@ export default function CardViewPage() {
 
   // Déterminer la classe du thème
   const isCustomTheme = card?.themeId && card.themeId.startsWith("theme-");
-  const themeClass = isCustomTheme ? `restaurant-${card.themeId}` : "daisy-theme-wrapper";
-  const dataTheme = !isCustomTheme ? card?.themeId : undefined;
+  const themeClass = isCustomTheme ? `restaurant-${card.themeId}` : "restaurant-theme-default";
+  const dataTheme = undefined;
 
   const themeLabel = card?.themeId && THEME_INFO[card.themeId]
     ? THEME_INFO[card.themeId].label
@@ -142,30 +150,12 @@ export default function CardViewPage() {
       )}`
     : null;
 
-  // Écran de chargement (Minimaliste & Anonyme)
+  // Écran de chargement
   if (loading) {
     return (
-      <div style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        minHeight: "100vh",
-        background: "#f9fafb",
-        color: "#6b7280",
-        fontFamily: "sans-serif"
-      }}>
-        <div style={{
-          width: "40px",
-          height: "40px",
-          border: "4px solid rgba(0,0,0,0.1)",
-          borderTopColor: "#374151",
-          borderRadius: "50%",
-          animation: "spin 1s linear infinite",
-          marginBottom: "16px"
-        }} />
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-        <span style={{ fontSize: "16px", fontWeight: 500 }}>Chargement en cours...</span>
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background text-foreground">
+        <div className="mb-4 h-10 w-10 animate-spin rounded-full border-4 border-muted border-t-primary" />
+        <span className="text-base font-medium">Chargement en cours...</span>
       </div>
     );
   }
@@ -173,30 +163,25 @@ export default function CardViewPage() {
   // Écran d'erreur
   if (error || !card) {
     return (
-      <main className="landing-page scene-ready">
-        <div className="ambient ambient-one" />
-        <div className="ambient ambient-two" />
-        <header className="site-header">
-          <Link className="brand brand-small" href="/" aria-label="MonCode - accueil">
-            <span>Mon</span>Code
+      <main className="flex min-h-screen flex-col items-center justify-center bg-background text-foreground p-4">
+        <header className="absolute top-0 left-0 p-6">
+          <Link className="flex items-center text-xl font-bold tracking-tight" href="/">
+            <span>Mon</span><span className="text-primary">Code</span>
           </Link>
-          <p className="header-note">Vos menus digitaux, en un scan.</p>
         </header>
 
-        <section className="hero">
-          <div className="action-panel" style={{ opacity: 1, transform: "none", maxWidth: "580px" }}>
-            <p className="eyebrow">Introuvable</p>
-            <h1 className="brand" style={{ fontSize: "clamp(28px, 4vw, 42px)", margin: "0 0 16px" }}>
-              Menu <span>non trouvé</span>
-            </h1>
-            <p className="hero-description" style={{ margin: "0 auto 28px" }}>
-              {error || "Ce menu n'existe pas ou a été désactivé."}
-            </p>
-            <div className="action-buttons">
-              <Link href="/" className="cta-button">
-                Créer un menu avec MonCode
-              </Link>
-            </div>
+        <section className="text-center space-y-6 max-w-md">
+          <p className="text-sm font-semibold text-muted-foreground uppercase tracking-widest">Introuvable</p>
+          <h1 className="text-4xl font-extrabold tracking-tight">
+            Menu <span className="text-primary">non trouvé</span>
+          </h1>
+          <p className="text-lg text-muted-foreground">
+            {error || "Ce menu n'existe pas ou a été désactivé."}
+          </p>
+          <div className="pt-4">
+            <Link href="/" className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-8 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90">
+              Créer un menu avec MonCode
+            </Link>
           </div>
         </section>
       </main>
@@ -208,10 +193,18 @@ export default function CardViewPage() {
     <main className={`menu-view-root ${themeClass} p-0 overflow-hidden`} data-theme={dataTheme} style={{ minHeight: "100svh" }}>
       <RestaurantCardLayout 
         restaurantName={card.restaurantName || ""}
+        address={card.address || undefined}
         logoUrl={card.logoUrl || undefined}
         locationUrl={safeLocationUrl || undefined}
         phoneNumber={cleanPhone || undefined}
+        facebookUrl={card.facebookUrl || undefined}
+        instagramUrl={card.instagramUrl || undefined}
+        xUrl={card.xUrl || undefined}
+        snapchatUrl={card.snapchatUrl || undefined}
+        additionalInfo={card.additionalInfo || undefined}
+        schedule={card.schedule}
         menuImages={card.menuImages || []}
+        placeImages={card.placeImages || []}
       />
     </main>
   );

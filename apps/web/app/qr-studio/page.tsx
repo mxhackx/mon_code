@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useFile } from "../context/FileContext";
-import QRCodeStudio from "../components/QRCodeStudio";
+import QRCodeStudio from "../../components/QRCodeStudio";
 
 interface QrResult {
   slug: string;
@@ -49,9 +49,16 @@ export default function QrStudioPage() {
       if (userInfo.amountReceived) formData.append("amountReceived", userInfo.amountReceived);
 
       // Informations du restaurant
-      formData.append("restaurantName", restaurantInfo.restaurantName);
+            formData.append("restaurantName", restaurantInfo.restaurantName);
+      formData.append("address", restaurantInfo.address || "");
       formData.append("locationUrl", restaurantInfo.locationUrl);
       formData.append("phoneNumber", restaurantInfo.phoneNumber);
+      if (restaurantInfo.facebookUrl) formData.append("facebookUrl", restaurantInfo.facebookUrl);
+      if (restaurantInfo.instagramUrl) formData.append("instagramUrl", restaurantInfo.instagramUrl);
+      if (restaurantInfo.xUrl) formData.append("xUrl", restaurantInfo.xUrl);
+      if (restaurantInfo.snapchatUrl) formData.append("snapchatUrl", restaurantInfo.snapchatUrl);
+      if (restaurantInfo.additionalInfo) formData.append("additionalInfo", restaurantInfo.additionalInfo);
+      formData.append("schedule", JSON.stringify(restaurantInfo.schedule));
       formData.append("themeId", customization.themeId);
       if (customization.qrStyle) formData.append("qrStyle", customization.qrStyle);
 
@@ -60,9 +67,15 @@ export default function QrStudioPage() {
         formData.append("logo", restaurantInfo.logoFile);
       }
 
+      
       // Photos du menu
       for (const menuFile of restaurantInfo.menuFiles) {
         formData.append("menu", menuFile);
+      }
+      
+      // Photos du lieu
+      for (const placeFile of restaurantInfo.placeFiles) {
+        formData.append("place", placeFile);
       }
 
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5500";

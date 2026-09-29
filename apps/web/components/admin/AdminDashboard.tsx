@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import AdminCardsList, { CardSummary } from "./AdminCardsList";
 import AdminSettingsForm from "./AdminSettingsForm";
-import { useFile } from "../../context/FileContext";
+import { useFile } from "../../app/context/FileContext";
 
 interface AdminDashboardProps {
   adminToken: string;

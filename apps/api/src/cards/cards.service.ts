@@ -12,10 +12,18 @@ export interface CardMetadata {
   userName?: string;
   clientName?: string;
   workDone?: string;
-  amountReceived?: string;
+  amountReceived?: number;
+  currency?: string;
   restaurantName?: string;
+  address?: string;
   locationUrl?: string;
   phoneNumber?: string;
+  facebookUrl?: string;
+  instagramUrl?: string;
+  xUrl?: string;
+  snapchatUrl?: string;
+  schedule?: string;
+  additionalInfo?: string;
   themeId?: string;
   qrStyle?: string;
 }
@@ -24,6 +32,7 @@ export interface UploadedCardFiles {
   file?: Express.Multer.File;
   logo?: Express.Multer.File;
   menu?: Express.Multer.File[];
+  place?: Express.Multer.File[];
 }
 
 @Injectable()
@@ -208,7 +217,8 @@ export class CardsService {
       userName: cleanStr(metadata?.userName),
       clientName: cleanStr(metadata?.clientName),
       workDone: cleanStr(metadata?.workDone),
-      amountReceived: cleanStr(metadata?.amountReceived),
+      amountReceived: metadata?.amountReceived !== undefined && metadata.amountReceived !== null ? Number(metadata.amountReceived) : null,
+      currency: cleanStr(metadata?.currency) ?? 'fcfa',
     };
 
     const card: Card = await this.prisma.card.create({
@@ -299,6 +309,7 @@ export class CardsService {
         clientName: card.clientName ?? null,
         workDone: card.workDone ?? null,
         amountReceived: card.amountReceived ?? null,
+        currency: card.currency ?? 'fcfa',
         cardUrl: `${appUrl}/c/${card.slug}`,
         createdAt: card.createdAt,
       };

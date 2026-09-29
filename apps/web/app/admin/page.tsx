@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useFile } from "../context/FileContext";
-import AdminDashboard from "../components/admin/AdminDashboard";
+import AdminDashboard from "../../components/admin/AdminDashboard";
 
 export default function AdminPage() {
   const router = useRouter();

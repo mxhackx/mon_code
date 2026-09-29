@@ -24,10 +24,18 @@ export class UpdateCardDto {
   userName?: string;
   clientName?: string;
   workDone?: string;
-  amountReceived?: string;
+  amountReceived?: number;
+  currency?: string;
   restaurantName?: string;
   locationUrl?: string;
+  address?: string;
   phoneNumber?: string;
+  facebookUrl?: string;
+  instagramUrl?: string;
+  xUrl?: string;
+  snapchatUrl?: string;
+  schedule?: string;
+  additionalInfo?: string;
   themeId?: string;
   qrStyle?: string;
 }
@@ -36,10 +44,18 @@ export class CreateCardDto {
   userName?: string;
   clientName?: string;
   workDone?: string;
-  amountReceived?: string;
+  amountReceived?: number;
+  currency?: string;
   restaurantName?: string;
   locationUrl?: string;
+  address?: string;
   phoneNumber?: string;
+  facebookUrl?: string;
+  instagramUrl?: string;
+  xUrl?: string;
+  snapchatUrl?: string;
+  schedule?: string;
+  additionalInfo?: string;
   themeId?: string;
   qrStyle?: string;
 }
@@ -77,6 +93,7 @@ export class CardsController {
       { name: 'file', maxCount: 1 },
       { name: 'logo', maxCount: 1 },
       { name: 'menu', maxCount: 8 },
+      { name: 'place', maxCount: 8 },
     ], {
       limits: { fileSize: 6 * 1024 * 1024, files: 10 },
       fileFilter: (_req: Request, file: Express.Multer.File, callback: (error: Error | null, acceptFile: boolean) => void) => {
@@ -90,7 +107,7 @@ export class CardsController {
   async uploadCardProtected(
     @Req() req: Request,
     @Headers('authorization') authHeader: string | undefined,
-    @UploadedFiles() files: { file?: Express.Multer.File[]; logo?: Express.Multer.File[]; menu?: Express.Multer.File[]; },
+    @UploadedFiles() files: { file?: Express.Multer.File[]; logo?: Express.Multer.File[]; menu?: Express.Multer.File[]; place?: Express.Multer.File[]; },
     @Body() body?: CreateCardDto,
   ) {
     let token = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
@@ -110,12 +127,13 @@ export class CardsController {
     const singleFile = files?.file?.[0];
     const logoFile = files?.logo?.[0];
     const menuFiles = files?.menu ?? [];
+    const placeFiles = files?.place ?? [];
 
     if (!singleFile && !logoFile && menuFiles.length === 0) {
       throw new BadRequestException('Veuillez fournir au moins une image (carte, logo ou menu).');
     }
 
-    return this.cardsService.createCard({ file: singleFile, logo: logoFile, menu: menuFiles }, body);
+    return this.cardsService.createCard({ file: singleFile, logo: logoFile, menu: menuFiles, place: placeFiles }, body);
   }
 
   /**
@@ -127,6 +145,7 @@ export class CardsController {
       { name: 'file', maxCount: 1 },
       { name: 'logo', maxCount: 1 },
       { name: 'menu', maxCount: 8 },
+      { name: 'place', maxCount: 8 },
     ], {
       limits: { fileSize: 6 * 1024 * 1024, files: 10 },
       fileFilter: (_req: Request, file: Express.Multer.File, callback: (error: Error | null, acceptFile: boolean) => void) => {
@@ -138,12 +157,13 @@ export class CardsController {
     })
   )
   async uploadCardPublic(
-    @UploadedFiles() files: { file?: Express.Multer.File[]; logo?: Express.Multer.File[]; menu?: Express.Multer.File[]; },
+    @UploadedFiles() files: { file?: Express.Multer.File[]; logo?: Express.Multer.File[]; menu?: Express.Multer.File[]; place?: Express.Multer.File[]; },
     @Body() body?: CreateCardDto,
   ) {
     const singleFile = files?.file?.[0];
     const logoFile = files?.logo?.[0];
     const menuFiles = files?.menu ?? [];
+    const placeFiles = files?.place ?? [];
 
     if (!singleFile && !logoFile && menuFiles.length === 0) {
       throw new BadRequestException('Veuillez fournir au moins une image (carte, logo ou menu).');
@@ -154,6 +174,7 @@ export class CardsController {
     delete sanitizedBody.clientName;
     delete sanitizedBody.workDone;
     delete sanitizedBody.amountReceived;
+    delete sanitizedBody.currency;
 
     return this.cardsService.createCard({ file: singleFile, logo: logoFile, menu: menuFiles }, sanitizedBody);
   }
@@ -196,7 +217,7 @@ export class CardsController {
     @Req() req: Request,
     @Headers('authorization') authHeader: string | undefined,
     @Param('slug') slug: string,
-    @UploadedFiles() files: { file?: Express.Multer.File[]; logo?: Express.Multer.File[]; menu?: Express.Multer.File[]; },
+    @UploadedFiles() files: { file?: Express.Multer.File[]; logo?: Express.Multer.File[]; menu?: Express.Multer.File[]; place?: Express.Multer.File[]; },
     @Body() body: UpdateCardDto,
   ) {
     let token = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;

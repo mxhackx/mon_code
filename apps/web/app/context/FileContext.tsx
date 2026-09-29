@@ -15,16 +15,26 @@ export interface UserInfo {
   clientName: string;
   workDone: string;
   amountReceived: string;
+  currency: string;
 }
 
 export interface RestaurantInfo {
   restaurantName: string;
+  address: string;
   locationUrl: string;
   phoneNumber: string;
+  facebookUrl: string;
+  instagramUrl: string;
+  xUrl: string;
+  snapchatUrl: string;
+  additionalInfo: string;
+  schedule: Record<string, { isOpen: boolean; open: string; close: string }>;
   logoFile: File | null;
   logoPreview: string | null;
   menuFiles: File[];
   menuPreviews: string[];
+  placeFiles: File[];
+  placePreviews: string[];
 }
 
 export interface CustomizationInfo {
@@ -37,16 +47,34 @@ const initialUserInfo: UserInfo = {
   clientName: "",
   workDone: "",
   amountReceived: "",
+  currency: "fcfa",
 };
 
 const initialRestaurantInfo: RestaurantInfo = {
   restaurantName: "",
+  address: "",
   locationUrl: "",
   phoneNumber: "",
+  facebookUrl: "",
+  instagramUrl: "",
+  xUrl: "",
+  snapchatUrl: "",
+  additionalInfo: "",
+  schedule: {
+    monday: { isOpen: true, open: "09:00", close: "22:00" },
+    tuesday: { isOpen: true, open: "09:00", close: "22:00" },
+    wednesday: { isOpen: true, open: "09:00", close: "22:00" },
+    thursday: { isOpen: true, open: "09:00", close: "22:00" },
+    friday: { isOpen: true, open: "09:00", close: "23:00" },
+    saturday: { isOpen: true, open: "10:00", close: "23:00" },
+    sunday: { isOpen: false, open: "10:00", close: "15:00" },
+  },
   logoFile: null,
   logoPreview: null,
   menuFiles: [],
   menuPreviews: [],
+  placeFiles: [],
+  placePreviews: [],
 };
 
 const initialCustomization: CustomizationInfo = {
@@ -72,6 +100,8 @@ interface FileContextType {
   setRestaurantLogo: (file: File | null) => void;
   addMenuFiles: (files: File[]) => void;
   removeMenuFile: (index: number) => void;
+  addPlaceFiles: (files: File[]) => void;
+  removePlaceFile: (index: number) => void;
   // Personnalisation Thème & QR
   customization: CustomizationInfo;
   setThemeId: (themeId: string) => void;
@@ -316,17 +346,40 @@ export function FileProvider({ children }: { children: ReactNode }) {
 
   const removeMenuFile = (index: number) => {
     setRestaurantInfo((prev) => {
-      const previewToRemove = prev.menuPreviews[index];
-      if (previewToRemove) {
-        URL.revokeObjectURL(previewToRemove);
+      const newFiles = [...prev.menuFiles];
+      newFiles.splice(index, 1);
+
+      const newPreviews = [...prev.menuPreviews];
+      if (newPreviews[index]) {
+        URL.revokeObjectURL(newPreviews[index]);
+        newPreviews.splice(index, 1);
       }
-      const updatedFiles = prev.menuFiles.filter((_, i) => i !== index);
-      const updatedPreviews = prev.menuPreviews.filter((_, i) => i !== index);
-      return {
-        ...prev,
-        menuFiles: updatedFiles,
-        menuPreviews: updatedPreviews,
-      };
+
+      return { ...prev, menuFiles: newFiles, menuPreviews: newPreviews };
+    });
+  };
+
+  const addPlaceFiles = (files: File[]) => {
+    const previews = files.map((f) => URL.createObjectURL(f));
+    setRestaurantInfo((prev) => ({
+      ...prev,
+      placeFiles: [...prev.placeFiles, ...files],
+      placePreviews: [...prev.placePreviews, ...previews],
+    }));
+  };
+
+  const removePlaceFile = (index: number) => {
+    setRestaurantInfo((prev) => {
+      const newFiles = [...prev.placeFiles];
+      newFiles.splice(index, 1);
+
+      const newPreviews = [...prev.placePreviews];
+      if (newPreviews[index]) {
+        URL.revokeObjectURL(newPreviews[index]);
+        newPreviews.splice(index, 1);
+      }
+
+      return { ...prev, placeFiles: newFiles, placePreviews: newPreviews };
     });
   };
 
@@ -368,6 +421,8 @@ export function FileProvider({ children }: { children: ReactNode }) {
         setRestaurantLogo,
         addMenuFiles,
         removeMenuFile,
+        addPlaceFiles,
+        removePlaceFile,
         customization,
         setThemeId,
         setQrStyle,
