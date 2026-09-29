@@ -39,6 +39,7 @@ export interface RestaurantInfo {
 
 export interface CustomizationInfo {
   themeId: string;
+  cardLayout: string;
   qrStyle: string;
 }
 
@@ -79,6 +80,7 @@ const initialRestaurantInfo: RestaurantInfo = {
 
 const initialCustomization: CustomizationInfo = {
   themeId: "theme-1",
+    cardLayout: "classic",
   qrStyle: "style-1",
 };
 
@@ -105,6 +107,7 @@ interface FileContextType {
   // Personnalisation Thème & QR
   customization: CustomizationInfo;
   setThemeId: (themeId: string) => void;
+  setCardLayout: (layoutId: string) => void;
   setQrStyle: (qrStyle: string) => void;
   resetAll: () => void;
 
@@ -383,6 +386,10 @@ export function FileProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const setCardLayout = (cardLayout: string) => {
+    setCustomization((prev) => ({ ...prev, cardLayout }));
+  };
+
   const setThemeId = (themeId: string) => {
     setCustomization((prev) => ({ ...prev, themeId }));
   };
@@ -425,6 +432,7 @@ export function FileProvider({ children }: { children: ReactNode }) {
         removePlaceFile,
         customization,
         setThemeId,
+        setCardLayout,
         setQrStyle,
         resetAll,
         authToken,

@@ -82,6 +82,9 @@ export default function RestaurantPage() {
   const menuInputRef = useRef<HTMLInputElement>(null);
   const placeInputRef = useRef<HTMLInputElement>(null);
 
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   const [countryCode, setCountryCode] = useState("+229");
   const [localNumber, setLocalNumber] = useState("");
   const phoneInitialized = useRef(false);
@@ -216,7 +219,7 @@ export default function RestaurantPage() {
     router.push("/personnalisation");
   };
 
-  if (isAuthLoading || !authToken) {
+  if (!mounted || isAuthLoading || !authToken) {
     return (
       <main className="min-h-screen bg-slate-50 flex items-center justify-center text-slate-500 text-sm">
         <div className="flex items-center gap-3">

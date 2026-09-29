@@ -2,17 +2,18 @@
 
 import { useEffect, useRef, useState } from "react";
 import type QRCodeStyling from "qr-code-styling";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 
 export interface QRStyleConfig {
   dotsType: "rounded" | "dots" | "classy" | "classy-rounded" | "square" | "extra-rounded";
   cornersType: "dot" | "square" | "extra-rounded";
   color: string;
-  useLogo: boolean;
 }
 
 interface QRCodeStudioProps {
   dataUrl: string;
-  logoUrl?: string;
   initialConfig?: QRStyleConfig;
   onChange?: (configJson: string) => void;
 }
@@ -20,23 +21,19 @@ interface QRCodeStudioProps {
 const DEFAULT_CONFIG: QRStyleConfig = {
   dotsType: "rounded",
   cornersType: "extra-rounded",
-  color: "#d97706",
-  useLogo: false,
+  color: "#3b82f6", // Default blue-500
 };
 
-export default function QRCodeStudio({ dataUrl, logoUrl, initialConfig, onChange }: QRCodeStudioProps) {
+export default function QRCodeStudio({ dataUrl, initialConfig, onChange }: QRCodeStudioProps) {
   const [config, setConfig] = useState<QRStyleConfig>(initialConfig || DEFAULT_CONFIG);
   const [qrCode, setQrCode] = useState<QRCodeStyling | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
-  // Initialisation dynamique statique (sans dépendances)
   useEffect(() => {
     let isMounted = true;
     import("qr-code-styling").then((module) => {
       if (!isMounted) return;
       const QRCodeStylingClass = module.default;
-      // On instancie avec les paramètres fixes.
-      // Les paramètres variables (data, color, etc.) seront injectés par le 3ème useEffect.
       const qr = new QRCodeStylingClass({
         width: 250,
         height: 250,
@@ -47,7 +44,6 @@ export default function QRCodeStudio({ dataUrl, logoUrl, initialConfig, onChange
     return () => { isMounted = false; };
   }, []);
 
-  // Attacher le canvas au DOM
   useEffect(() => {
     if (qrCode && ref.current) {
       if (ref.current.innerHTML !== "") {
@@ -57,12 +53,10 @@ export default function QRCodeStudio({ dataUrl, logoUrl, initialConfig, onChange
     }
   }, [qrCode, ref]);
 
-  // Mettre à jour le design quand la configuration change (réactif)
   useEffect(() => {
     if (!qrCode) return;
     qrCode.update({
       data: dataUrl,
-      image: config.useLogo && logoUrl ? logoUrl : "",
       dotsOptions: { color: config.color, type: config.dotsType },
       cornersSquareOptions: { color: config.color, type: config.cornersType },
     });
@@ -70,82 +64,75 @@ export default function QRCodeStudio({ dataUrl, logoUrl, initialConfig, onChange
     if (onChange) {
       onChange(JSON.stringify(config));
     }
-  }, [qrCode, config, dataUrl, logoUrl, onChange]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [qrCode, config, dataUrl]);
 
   return (
-    <div style={{ display: "flex", gap: "24px", flexWrap: "wrap", background: "rgba(0,0,0,0.02)", padding: "24px", borderRadius: "16px", border: "1px dashed rgba(0,0,0,0.1)" }}>
-       {/* Gauche : Prévisualisation */}
-       <div style={{ flex: "1 1 250px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#fff", padding: "24px", borderRadius: "12px", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
-         <h4 style={{ margin: "0 0 16px 0", color: "#333", fontSize: "16px" }}>Aperçu du QR Code</h4>
-         <div ref={ref} style={{ display: "flex", justifyContent: "center", background: "#fff", padding: "10px", borderRadius: "12px" }} />
+    <div className="flex flex-col md:flex-row gap-8 p-6 md:p-8">
+       {/* Preview Side */}
+       <div className="flex-1 flex flex-col items-center justify-center bg-slate-50/50 rounded-2xl p-6 border border-slate-100">
+         <h4 className="text-sm font-semibold text-slate-900 mb-6">Aperçu du QR Code</h4>
+         <div ref={ref} className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100" />
        </div>
 
-       {/* Droite : Contrôles */}
-       <div style={{ flex: "1 1 300px", display: "flex", flexDirection: "column", gap: "16px" }}>
-         <h4 style={{ margin: "0", color: "#333", fontSize: "16px" }}>Personnalisation</h4>
+       {/* Controls Side */}
+       <div className="flex-1 flex flex-col gap-6">
+         <h4 className="text-sm font-semibold text-slate-900">Apparence visuelle</h4>
          
-         <div>
-           <label style={{ display: "block", fontSize: "12px", fontWeight: "bold", marginBottom: "6px", color: "#625852" }}>Motif des points</label>
-           <select 
+         <div className="space-y-2">
+           <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Motif des points</Label>
+           <Select 
              value={config.dotsType} 
-             onChange={(e) => setConfig({...config, dotsType: e.target.value as QRStyleConfig["dotsType"]})} 
-             style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #ccc", background: "#fff", outline: "none" }}
+             onValueChange={(val) => setConfig({...config, dotsType: val as QRStyleConfig["dotsType"]})}
            >
-             <option value="square">Carrés classiques</option>
-             <option value="rounded">Arrondis</option>
-             <option value="dots">Points</option>
-             <option value="classy">Élégant</option>
-             <option value="classy-rounded">Élégant & Arrondi</option>
-             <option value="extra-rounded">Extra Arrondi</option>
-           </select>
+             <SelectTrigger className="w-full bg-white h-11">
+               <SelectValue placeholder="Choisir un motif" />
+             </SelectTrigger>
+             <SelectContent>
+               <SelectItem value="square">Carrés classiques</SelectItem>
+               <SelectItem value="rounded">Arrondis</SelectItem>
+               <SelectItem value="dots">Points</SelectItem>
+               <SelectItem value="classy">Élégant</SelectItem>
+               <SelectItem value="classy-rounded">Élégant & Arrondi</SelectItem>
+               <SelectItem value="extra-rounded">Extra Arrondi</SelectItem>
+             </SelectContent>
+           </Select>
          </div>
 
-         <div>
-           <label style={{ display: "block", fontSize: "12px", fontWeight: "bold", marginBottom: "6px", color: "#625852" }}>Forme des coins (Repères)</label>
-           <select 
+         <div className="space-y-2">
+           <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Forme des coins</Label>
+           <Select 
              value={config.cornersType} 
-             onChange={(e) => setConfig({...config, cornersType: e.target.value as QRStyleConfig["cornersType"]})} 
-             style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #ccc", background: "#fff", outline: "none" }}
+             onValueChange={(val) => setConfig({...config, cornersType: val as QRStyleConfig["cornersType"]})}
            >
-             <option value="square">Carrés (Standard)</option>
-             <option value="extra-rounded">Arrondis</option>
-             <option value="dot">Ronds</option>
-           </select>
+             <SelectTrigger className="w-full bg-white h-11">
+               <SelectValue placeholder="Choisir une forme" />
+             </SelectTrigger>
+             <SelectContent>
+               <SelectItem value="square">Carrés (Standard)</SelectItem>
+               <SelectItem value="extra-rounded">Arrondis</SelectItem>
+               <SelectItem value="dot">Ronds</SelectItem>
+             </SelectContent>
+           </Select>
          </div>
 
-         <div>
-           <label style={{ display: "block", fontSize: "12px", fontWeight: "bold", marginBottom: "6px", color: "#625852" }}>Couleur principale</label>
-           <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+         <div className="space-y-2">
+           <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Couleur principale</Label>
+           <div className="flex items-center gap-3">
              <input 
                type="color" 
                value={config.color} 
                onChange={(e) => setConfig({...config, color: e.target.value})} 
-               style={{ width: "45px", height: "45px", padding: "0", border: "none", borderRadius: "8px", cursor: "pointer", overflow: "hidden" }} 
+               className="w-12 h-12 p-0 border-0 rounded-lg cursor-pointer bg-transparent"
              />
-             <span style={{ fontSize: "14px", color: "#333", fontFamily: "monospace", fontWeight: "bold" }}>{config.color.toUpperCase()}</span>
+             <Input 
+               type="text" 
+               value={config.color.toUpperCase()} 
+               onChange={(e) => setConfig({...config, color: e.target.value})}
+               className="h-11 w-32 font-mono text-sm uppercase bg-white"
+             />
            </div>
          </div>
-
-         {logoUrl && (
-           <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "12px", background: "#fff", padding: "12px", borderRadius: "8px", border: "1px solid #eee" }}>
-             <input 
-               type="checkbox" 
-               id="useLogo" 
-               checked={config.useLogo} 
-               onChange={(e) => setConfig({...config, useLogo: e.target.checked})} 
-               style={{ width: "20px", height: "20px", cursor: "pointer", accentColor: "var(--orange)" }} 
-             />
-             <label htmlFor="useLogo" style={{ fontSize: "14px", fontWeight: "bold", cursor: "pointer", color: "#333" }}>
-               Incruster le logo au centre
-             </label>
-           </div>
-         )}
-         
-         {!logoUrl && (
-           <div style={{ fontSize: "12px", color: "#8a7a70", fontStyle: "italic", marginTop: "8px" }}>
-             Ajoutez un logo à la carte pour pouvoir l&apos;incruster dans le QR Code.
-           </div>
-         )}
        </div>
     </div>
   );

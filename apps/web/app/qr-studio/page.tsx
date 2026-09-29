@@ -2,6 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowRight, LayoutDashboard, CheckCircle2, Download, Copy, Share2 } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { QrCode } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { useFile } from "../context/FileContext";
 import QRCodeStudio from "../../components/QRCodeStudio";
@@ -21,7 +28,9 @@ export default function QrStudioPage() {
     customization,
     setQrStyle,
     authToken,
+    authRole,
     isAuthLoading,
+    resetAll,
   } = useFile();
 
   useEffect(() => {
@@ -34,6 +43,7 @@ export default function QrStudioPage() {
   const [error, setError] = useState<string | null>(null);
   const [qrResult, setQrResult] = useState<QrResult | null>(null);
   const [copied, setCopied] = useState(false);
+  const [qrName, setQrName] = useState("");
 
   const handleGenerate = async () => {
     setIsGenerating(true);
@@ -60,6 +70,7 @@ export default function QrStudioPage() {
       if (restaurantInfo.additionalInfo) formData.append("additionalInfo", restaurantInfo.additionalInfo);
       formData.append("schedule", JSON.stringify(restaurantInfo.schedule));
       formData.append("themeId", customization.themeId);
+      if (customization.cardLayout) formData.append("cardLayout", customization.cardLayout);
       if (customization.qrStyle) formData.append("qrStyle", customization.qrStyle);
 
       // Logo
@@ -104,6 +115,40 @@ export default function QrStudioPage() {
     }
   };
 
+  
+  const [finalQrCode, setFinalQrCode] = useState<any>(null);
+
+  useEffect(() => {
+    if (qrResult && customization.qrStyle) {
+      const config = JSON.parse(customization.qrStyle);
+      import("qr-code-styling").then((module) => {
+        const QRCodeStylingClass = module.default;
+        const qr = new QRCodeStylingClass({
+        width: 300,
+        height: 300,
+        data: qrResult.cardUrl,
+        image: "",
+        dotsOptions: { color: config.color, type: config.dotsType },
+        cornersSquareOptions: { color: config.color, type: config.cornersType },
+        imageOptions: { crossOrigin: "anonymous", margin: 10 },
+      });
+      setFinalQrCode(qr);
+
+      const container = document.getElementById("qr-result-container");
+      if (container) {
+        container.innerHTML = "";
+        qr.append(container);
+      }
+      });
+    }
+  }, [qrResult, customization.qrStyle]);
+
+  const handleDownloadQr = () => {
+    if (finalQrCode) {
+      finalQrCode.download({ name: qrName.trim() || `menu-${qrResult?.slug || 'qr'}`, extension: "png" });
+    }
+  };
+
   const handleCopyLink = () => {
     if (qrResult) {
       navigator.clipboard.writeText(qrResult.cardUrl);
@@ -115,82 +160,133 @@ export default function QrStudioPage() {
   if (isAuthLoading) return null;
 
   return (
-    <main className="landing-page scene-ready">
-      <div className="splash"></div>
-      <div className="ambient ambient-one"></div>
-      <div className="ambient ambient-two"></div>
+    <main className="min-h-screen bg-slate-50/50 flex flex-col font-sans">
+      
 
-      <header className="site-header" style={{ marginBottom: "20px" }}>
-        <Link href="/" className="logo">Visicard <span>PRO</span></Link>
-        <span style={{ background: "rgba(239, 106, 34, 0.1)", color: "var(--orange-dark)", padding: "6px 12px", borderRadius: "999px", fontSize: "12px", fontWeight: 700 }}>
-          Étape 4 / 4
-        </span>
+            <header className="w-full h-16 border-b bg-white flex items-center justify-between px-6 lg:px-12 sticky top-0 z-20 shadow-sm">
+        <Link href="/" className="flex items-center gap-2.5 group">
+          <div className="grid grid-cols-2 gap-0.5 w-5 h-5 text-blue-600">
+            <img src="/logo.svg" alt="MonCode Logo" className="h-6 w-6" />
+          </div>
+          <span className="font-bold text-xl tracking-tight text-slate-900 group-hover:text-blue-600 transition-colors">MonCode</span>
+        </Link>
       </header>
 
-      <section style={{ position: "relative", zIndex: 10, width: "100%", maxWidth: "900px", margin: "0 auto" }}>
-        <div style={{ background: "#ffffff", borderRadius: "24px", padding: "clamp(20px, 4vw, 40px)", boxShadow: "0 20px 40px rgba(0,0,0,0.06)", border: "1px solid rgba(0,0,0,0.04)" }}>
-          {qrResult ? (
-            <div style={{ textAlign: "center" }}>
-              <span style={{ fontSize: "40px", display: "block", marginBottom: "16px" }}>🎉</span>
-              <h1 className="brand" style={{ fontSize: "clamp(24px, 4vw, 32px)", margin: "0 0 10px" }}>
-                Menu Numérique <span>Créé !</span>
+            <section className="relative z-10 w-full px-4 py-8">
+        {qrResult ? (
+
+            <div className="flex flex-col items-center max-w-2xl mx-auto mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6">
+                <CheckCircle2 className="w-8 h-8" />
+              </div>
+              <h1 className="text-3xl font-bold text-slate-900 mb-2">
+                Menu Numérique Créé !
               </h1>
-              <p style={{ color: "#625852", fontSize: "15px", margin: "0 auto 32px", maxWidth: "400px" }}>
-                Votre carte interactive est prête. Téléchargez le QR Code généré ci-dessous pour l'imprimer.
+              <p className="text-slate-500 text-center mb-8 max-w-md">
+                Votre carte interactive est prête. Téléchargez le QR Code généré ci-dessous pour l'imprimer ou le partager.
               </p>
-              <div style={{ display: "inline-block", background: "#f8f9fb", padding: "20px", borderRadius: "16px", border: "1.5px solid rgba(0,0,0,0.06)", marginBottom: "32px" }}>
-                <img src={qrResult.qrCode} alt="QR Code final" style={{ width: "200px", height: "200px", borderRadius: "8px", background: "#fff", display: "block", margin: "0 auto" }} />
-              </div>
-              <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
-                <a href={qrResult.qrCode} download={`qrcode-${qrResult.slug}.png`} className="cta-button" style={{ background: "var(--orange)", color: "#fff", borderColor: "var(--orange)" }}>
-                  Télécharger le QR Code ↓
-                </a>
-                <button type="button" onClick={handleCopyLink} className="cta-button" style={{ background: "transparent", color: "var(--ink)", borderColor: "currentColor" }}>
-                  {copied ? "✓ Lien copié !" : "Copier le lien"}
-                </button>
-                <Link href={`/c/${qrResult.slug}`} className="cta-button" style={{ background: "#181411", borderColor: "#181411", color: "#fff" }}>
-                  Voir le menu →
-                </Link>
-              </div>
+              
+              <Card className="w-full max-w-md overflow-hidden border-slate-200/60 shadow-xl shadow-slate-200/40">
+                <CardContent className="p-8 flex flex-col items-center">
+                  <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 mb-8 w-full flex justify-center" id="qr-result-container">
+                    {/* The QR code will be injected here via useEffect */}
+                  </div>
+                  
+                  <div className="w-full flex flex-col gap-3">
+                    <Button 
+                      onClick={handleDownloadQr} 
+                      className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium text-base shadow-lg shadow-blue-200"
+                    >
+                      <Download className="mr-2 h-5 w-5" />
+                      Télécharger le QR Code (PNG)
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      onClick={handleCopyLink}
+                      className={`w-full h-12 font-medium text-base transition-colors ${copied ? 'border-green-500 text-green-600 bg-green-50 hover:bg-green-50' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}
+                    >
+                      {copied ? <CheckCircle2 className="mr-2 h-5 w-5" /> : <Copy className="mr-2 h-5 w-5" />}
+                      {copied ? "Lien copié !" : "Copier le lien du menu"}
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      onClick={() => { 
+                        resetAll(); 
+                        if (authRole === 'admin') router.push('/admin'); 
+                        else router.push('/intervenant'); 
+                      }}
+                      className="w-full h-12 font-medium text-base text-slate-600 hover:text-slate-900 hover:bg-slate-100 mt-2"
+                    >
+                      <LayoutDashboard className="mr-2 h-5 w-5" />
+                      {authRole === 'admin' ? "Retour au Dashboard Admin" : "Terminer et créer une autre carte"}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-          ) : (
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-                <button type="button" onClick={() => router.push("/personnalisation")} style={{ background: "none", border: "none", color: "var(--ink)", cursor: "pointer", fontSize: "14px", fontWeight: "bold" }}>
-                  ← Retour au design
-                </button>
+
+        ) : (
+
+            <div className="max-w-5xl mx-auto">
+              <div className="mb-8">
+                <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">Studio QR Code</h1>
+                <p className="text-slate-500">Personnalisez l'apparence du QR code que vos clients scanneront.</p>
               </div>
 
-              <p className="eyebrow">Dernière étape</p>
-              <h1 className="brand" style={{ fontSize: "clamp(28px, 4vw, 40px)", margin: "0 0 10px" }}>
-                Designez votre <span>QR Code</span>
-              </h1>
-              <p className="hero-description" style={{ margin: "0 auto 28px" }}>
-                Personnalisez le QR code qui sera imprimé pour vos clients.
-              </p>
-
-              <div style={{ textAlign: "left", marginBottom: "32px" }}>
+              <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden mb-8">
                 <QRCodeStudio 
-                  dataUrl="https://visicard.moncode.com/c/APERÇU"
-                  logoUrl={restaurantInfo.logoFile ? URL.createObjectURL(restaurantInfo.logoFile) : undefined}
+                  dataUrl="https://moncode.bj/c/"
+                  
                   onChange={(configStr: string) => setQrStyle(configStr)}
                 />
               </div>
 
               {error && (
-                <div style={{ color: "#b42318", background: "#fef3f2", border: "1px solid #fecdca", padding: "12px 16px", borderRadius: "12px", fontSize: "13.5px", marginBottom: "16px" }}>
-                  ⚠️ {error}
+                <div className="flex items-center gap-2 text-red-600 bg-red-50 p-4 rounded-xl text-sm font-medium mb-8">
+                  <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
+                  {error}
                 </div>
               )}
 
-              <div>
-                <button type="button" onClick={handleGenerate} disabled={isGenerating} className="cta-button" style={{ width: "100%", padding: "16px 24px", fontSize: "16px" }}>
-                  {isGenerating ? "Génération du QR Code..." : "Générer la carte finale →"}
-                </button>
+              
+              <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-6 md:p-8 mb-8">
+                <div className="max-w-md space-y-3">
+                  <Label className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                    <QrCode className="w-4 h-4 text-blue-500" />
+                    Nom du fichier à télécharger (Optionnel)
+                  </Label>
+                  <p className="text-xs text-slate-500">Donnez un nom personnalisé au fichier QR code pour le retrouver plus facilement.</p>
+                  <Input 
+                    placeholder="Ex: qr-code-terrasse" 
+                    value={qrName}
+                    onChange={(e) => setQrName(e.target.value)}
+                    className="h-11 max-w-sm bg-slate-50"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <Button 
+                  onClick={handleGenerate} 
+                  disabled={isGenerating} 
+                  className="h-14 px-8 bg-blue-500 hover:bg-blue-700 text-white text-base font-semibold shadow-xl shadow-slate-200 rounded-xl transition-all"
+                >
+                  {isGenerating ? (
+                    <>
+                      <div className="w-5 h-5 rounded-full border-2 border-slate-400 border-t-white animate-spin mr-3" />
+                      Génération en cours...
+                    </>
+                  ) : (
+                    <>
+                      Générer la carte finale
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </>
+                  )}
+                </Button>
               </div>
             </div>
-          )}
-        </div>
+
+        )}
       </section>
     </main>
   );

@@ -33,6 +33,11 @@ export default function IntervenantPage() {
   } = useFile();
 
   const [formError, setFormError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!isAuthLoading && !authToken) {
@@ -78,7 +83,7 @@ export default function IntervenantPage() {
     router.push("/connexion");
   };
 
-  if (isAuthLoading || !authToken) {
+  if (!mounted || isAuthLoading || !authToken) {
     return (
       <main className="min-h-screen bg-slate-50 flex items-center justify-center text-slate-500 text-sm">
         <div className="flex items-center gap-3">

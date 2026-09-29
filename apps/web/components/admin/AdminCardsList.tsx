@@ -1,8 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import AdminEditCardModal from "./AdminEditCardModal";
+import { AdminOverview } from "./AdminOverview";
+import { AdminTable } from "./AdminTable";
 
 export interface CardSummary {
   id: string;
@@ -32,120 +33,64 @@ interface AdminCardsListProps {
 
 export default function AdminCardsList({ cards, isLoading, onCreateFirstCard, onCardUpdated, adminToken }: AdminCardsListProps) {
   const [editingCard, setEditingCard] = useState<CardSummary | null>(null);
-  if (isLoading) {
-    return <p style={{ color: "#625852", padding: "30px 0" }}>Chargement des cartes...</p>;
-  }
 
-  if (cards.length === 0) {
+  if (isLoading) {
     return (
-      <div style={{ background: "rgba(0,0,0,0.02)", border: "1px dashed rgba(0,0,0,0.1)", borderRadius: "16px", padding: "40px 20px" }}>
-        <p style={{ margin: "0 0 12px", color: "#625852", fontSize: "15px" }}>
-          Aucune carte n&apos;a encore été enregistrée.
-        </p>
-        <button type="button" className="cta-button" onClick={onCreateFirstCard}>
-          Créer une première carte
-        </button>
+      <div className="flex flex-col items-center justify-center py-20 text-slate-500">
+        <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+        <p>Chargement des données...</p>
       </div>
     );
   }
 
+  // Calculate some basic stats
+  const totalRevenue = cards.reduce((acc, card) => {
+    if (!card.amountReceived) return acc;
+    // Extract numbers from something like "50000 FCFA"
+    const amount = parseInt(card.amountReceived.replace(/\\D/g, ''), 10);
+    return acc + (isNaN(amount) ? 0 : amount);
+  }, 0);
+
   return (
-    <div className="admin-cards-grid">
-      {cards.map((card) => (
-        <div key={card.id} className="admin-card-item">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={card.imageUrl} alt={`Carte ${card.slug}`} className="admin-card-thumb" />
+    <div className="space-y-6">
+      <AdminOverview cardsCount={cards.length} totalRevenue={totalRevenue} />
 
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: "8px", flexWrap: "wrap" }}>
-            <strong style={{ fontSize: "14px", color: "var(--ink)", display: "block" }}>
-              #{card.slug}
-            </strong>
-            {card.amountReceived && (
-              <span className="admin-amount-badge">
-                {card.amountReceived}
-              </span>
-            )}
-          </div>
-
-          <small style={{ color: "#8a7a70", fontSize: "12px", textAlign: "left" }}>
-            {new Date(card.createdAt).toLocaleDateString("fr-FR", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </small>
-
-          {/* Métadonnées restaurant & intervention */}
-          {(card.restaurantName || card.clientName || card.userName || card.workDone) && (
-            <div className="admin-card-meta">
-              {card.restaurantName && (
-                <div className="admin-meta-row">
-                  <span className="meta-label">Restaurant :</span>
-                  <span className="meta-val" style={{ color: "var(--orange-dark)", fontWeight: 700 }}>
-                    {card.restaurantName}
-                  </span>
-                </div>
-              )}
-              {card.phoneNumber && (
-                <div className="admin-meta-row">
-                  <span className="meta-label">Tél / WhatsApp :</span>
-                  <span className="meta-val">{card.phoneNumber}</span>
-                </div>
-              )}
-              {card.clientName && (
-                <div className="admin-meta-row">
-                  <span className="meta-label">Client :</span>
-                  <span className="meta-val">{card.clientName}</span>
-                </div>
-              )}
-              {card.userName && (
-                <div className="admin-meta-row">
-                  <span className="meta-label">Intervenant :</span>
-                  <span className="meta-val">{card.userName}</span>
-                </div>
-              )}
-              {card.workDone && (
-                <div className="admin-meta-row" style={{ flexDirection: "column", alignItems: "flex-start", gap: "3px" }}>
-                  <span className="meta-label">Travaux :</span>
-                  <span className="meta-val-block">{card.workDone}</span>
-                </div>
-              )}
-            </div>
-          )}
-
-          <div style={{ display: "flex", gap: "8px", marginTop: "auto" }}>
-            <Link
-              href={`/c/${card.slug}`}
-              className="cta-button"
-              style={{
-                minHeight: "36px",
-                padding: "0 14px",
-                fontSize: "12px",
-                flex: 1,
-              }}
-            >
-              Voir la carte
-            </Link>
-            <button
-              type="button"
-              onClick={() => setEditingCard(card)}
-              className="cta-button secondary"
-              style={{
-                minHeight: "36px",
-                padding: "0 14px",
-                fontSize: "12px",
-                flex: 1,
-                background: "rgba(0,0,0,0.05)",
-                color: "var(--ink)"
-              }}
-            >
-              Éditer
-            </button>
-          </div>
+      {cards.length === 0 ? (
+        <div className="bg-white border border-dashed border-slate-300 rounded-xl p-12 text-center">
+          <p className="text-slate-500 mb-6 font-medium">Aucune carte n'a encore été enregistrée.</p>
+          <button 
+            type="button" 
+            className="bg-blue-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-blue-700 transition-colors" 
+            onClick={onCreateFirstCard}
+          >
+            Créer ma première carte
+          </button>
         </div>
-      ))}
+      ) : (
+        <AdminTable 
+  cards={cards} 
+  onEdit={setEditingCard} 
+  onDelete={async (slug) => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5500";
+      const res = await fetch(`${apiUrl}/cards/${slug}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${adminToken}` }
+      });
+      if (res.ok) {
+        // We'll rely on the parent component reloading, or we can just trigger a local state update if we had access to setCards
+        // Since setCards is in AdminDashboard, we should ideally pass onDeleteCard to AdminCardsList.
+        // For now, let's just reload the page to refresh the list cleanly.
+        window.location.reload();
+      } else {
+        alert("Erreur lors de la suppression");
+      }
+    } catch (e) {
+      alert("Erreur de connexion");
+    }
+  }} 
+/>
+      )}
 
       {editingCard && (
         <AdminEditCardModal

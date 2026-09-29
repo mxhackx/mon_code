@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import AdminCardsList, { CardSummary } from "./AdminCardsList";
 import AdminSettingsForm from "./AdminSettingsForm";
 import { useFile } from "../../app/context/FileContext";
+import { LogOut, LayoutDashboard, Settings } from "lucide-react";
 
 interface AdminDashboardProps {
   adminToken: string;
@@ -26,19 +27,18 @@ export default function AdminDashboard({ adminToken, onLogout, onNavigateToUser 
       try {
         let token = adminToken;
         let res = await fetch(`${apiUrl}/cards`, {
-      credentials: 'include',
+          credentials: 'include',
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
 
-        // Si le token a expiré, tentative de rafraîchissement automatique
         if (res.status === 401) {
           const newToken = await refreshAccessToken();
           if (newToken) {
             token = newToken;
             res = await fetch(`${apiUrl}/cards`, {
-      credentials: 'include',
+              credentials: 'include',
               headers: {
                 Authorization: `Bearer ${token}`,
               },
@@ -46,12 +46,8 @@ export default function AdminDashboard({ adminToken, onLogout, onNavigateToUser 
           }
         }
 
-        if (res.status === 401) {
-          throw new Error("SESSION_EXPIRED");
-        }
-        if (!res.ok) {
-          throw new Error("FETCH_FAILED");
-        }
+        if (res.status === 401) throw new Error("SESSION_EXPIRED");
+        if (!res.ok) throw new Error("FETCH_FAILED");
 
         const data: CardSummary[] = await res.json();
         if (isSubscribed) {
@@ -74,10 +70,7 @@ export default function AdminDashboard({ adminToken, onLogout, onNavigateToUser 
     };
 
     fetchCards();
-
-    return () => {
-      isSubscribed = false;
-    };
+    return () => { isSubscribed = false; };
   }, [adminToken, onLogout, refreshAccessToken]);
 
   const handleCardUpdated = (updatedCard: CardSummary) => {
@@ -85,82 +78,84 @@ export default function AdminDashboard({ adminToken, onLogout, onNavigateToUser 
   };
 
   return (
-    <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px", marginBottom: "16px" }}>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(16, 185, 129, 0.12)", color: "#065f46", padding: "6px 14px", borderRadius: "999px", fontSize: "13px", fontWeight: 700 }}>
-          <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#10b981" }} />
-          Session Administrateur active
+    <div className="w-full flex flex-col min-h-screen bg-slate-50 font-sans text-slate-900">
+      
+      {/* Header Admin */}
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <span className="font-bold text-xl tracking-tight text-slate-900 flex items-center gap-2">
+              <span className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs">MC</span>
+              Admin
+            </span>
+            <div className="hidden sm:flex items-center gap-2 bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-xs font-semibold">
+              <span className="w-2 h-2 rounded-full bg-emerald-500" /> Session active
+            </div>
+          </div>
+
+          <button
+            onClick={onLogout}
+            className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-lg transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+            <span className="hidden sm:inline">Déconnexion</span>
+          </button>
+        </div>
+      </header>
+
+      {/* Main Content Area */}
+      <div className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+        
+        {errorMessage && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm font-medium mb-6">
+            ⚠️ {errorMessage}
+          </div>
+        )}
+
+        {/* Tabs Navigation */}
+        <div className="flex items-center gap-1 bg-slate-200/60 p-1 rounded-xl mb-8 w-max">
+          <button
+            onClick={() => setAdminTab("cards")}
+            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+              adminTab === "cards" 
+                ? "bg-white text-blue-700 shadow-sm ring-1 ring-slate-900/5" 
+                : "text-slate-600 hover:text-slate-900 hover:bg-slate-200"
+            }`}
+          >
+            <LayoutDashboard className="w-4 h-4" />
+            Tableau de bord
+          </button>
+          <button
+            onClick={() => setAdminTab("settings")}
+            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+              adminTab === "settings" 
+                ? "bg-white text-blue-700 shadow-sm ring-1 ring-slate-900/5" 
+                : "text-slate-600 hover:text-slate-900 hover:bg-slate-200"
+            }`}
+          >
+            <Settings className="w-4 h-4" />
+            Paramètres
+          </button>
         </div>
 
-        <button
-          type="button"
-          onClick={onLogout}
-          style={{
-            background: "none",
-            border: "1px solid rgba(0,0,0,0.15)",
-            padding: "6px 14px",
-            borderRadius: "8px",
-            fontSize: "13px",
-            cursor: "pointer",
-            color: "#625852",
-          }}
-        >
-          Se déconnecter
-        </button>
-      </div>
-
-      <h1 className="brand" style={{ fontSize: "clamp(30px, 4vw, 44px)", margin: "0 0 10px", textAlign: "left" }}>
-        Tableau de bord <span>Admin</span>
-      </h1>
-
-      {errorMessage && (
-        <div
-          style={{
-            background: "#fef3f2",
-            border: "1px solid #fecdca",
-            color: "#b42318",
-            padding: "12px 16px",
-            borderRadius: "12px",
-            fontSize: "13.5px",
-            fontWeight: 600,
-            marginBottom: "16px",
-            textAlign: "left",
-          }}
-        >
-          ⚠️ {errorMessage}
+        {/* Dynamic Content */}
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+          {adminTab === "cards" ? (
+            <AdminCardsList
+              cards={cardsList}
+              isLoading={isLoadingCards}
+              onCreateFirstCard={onNavigateToUser}
+              onCardUpdated={handleCardUpdated}
+              adminToken={adminToken}
+            />
+          ) : (
+            <div className="max-w-2xl bg-white rounded-xl shadow-sm border border-slate-200 p-6 sm:p-8">
+              <AdminSettingsForm adminToken={adminToken} />
+            </div>
+          )}
         </div>
-      )}
 
-      {/* Onglets Admin */}
-      <div className="admin-tabs">
-        <button
-          type="button"
-          className={`admin-tab ${adminTab === "cards" ? "active" : ""}`}
-          onClick={() => setAdminTab("cards")}
-        >
-          Cartes enregistrées ({cardsList.length})
-        </button>
-        <button
-          type="button"
-          className={`admin-tab ${adminTab === "settings" ? "active" : ""}`}
-          onClick={() => setAdminTab("settings")}
-        >
-          Sécurité & Identifiants
-        </button>
       </div>
-
-      {/* Contenu des onglets */}
-      {adminTab === "cards" ? (
-        <AdminCardsList
-          cards={cardsList}
-          isLoading={isLoadingCards}
-          onCreateFirstCard={onNavigateToUser}
-          onCardUpdated={handleCardUpdated}
-          adminToken={adminToken}
-        />
-      ) : (
-        <AdminSettingsForm adminToken={adminToken} />
-      )}
     </div>
   );
 }
