@@ -17,6 +17,9 @@
 /.next/
 /out/
 
+# PDF téléversés par le générateur de QR codes (storage/qr-documents)
+/storage/
+
 # production
 /build
 
